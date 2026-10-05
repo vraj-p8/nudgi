@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' data: blob: file:; font-src 'self' data: file:; media-src 'self' data: blob: file:; connect-src 'self' file:" />
+  <title>Avatar Lab · Nudgi</title>
+  <link rel="stylesheet" href="../shared/fonts.css" />
+  <link rel="stylesheet" href="../shared/fx.css" />
+  <style>
+    :root {
+      --bg: #f6f8fc; --surface: #ffffff; --surface-2: #eef3fa; --ink: #10213a; --muted: #5b6b82; --line: #e2e8f0;
+      --accent: #12b5d0; --accent-ink: #06404d; --coral: #ff7a59; --sun: #ffc53d;
+      --shadow: 0 1px 2px rgba(16, 33, 58, 0.06), 0 8px 24px rgba(16, 33, 58, 0.06);
+      color-scheme: light dark;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0b1220; --surface: #111a2e; --surface-2: #16223a; --ink: #e6eef8; --muted: #8ea0b8; --line: #1e2a44; --accent: #38d3ee; --accent-ink: #e6fbff; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); }
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.4 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
+    h1, h2, button, .chip, .seg, .badge { font-family: Fredoka, "Segoe UI", system-ui, sans-serif; }
+
+    .top { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 12px 24px;
+      background: color-mix(in oklab, var(--bg), transparent 8%); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: 12px; margin-right: auto; }
+    .brand-mark { width: 36px; height: 36px; border-radius: 12px; background: radial-gradient(circle at 35% 30%, #9cf1ff, #12b5d0 55%, #0a7f99); box-shadow: inset 0 -3px 0 rgba(0,0,0,.15), var(--shadow); position: relative; }
+    .brand-mark::after { content: ""; position: absolute; left: 10px; top: 15px; width: 16px; height: 8px; border-radius: 0 0 10px 10px; border: 2.5px solid #06404d; border-top: 0; }
+    h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 0.2px; }
+    .brand small { display: block; color: var(--muted); font: 12px/1.3 "Segoe UI", system-ui, sans-serif; }
+
+    .group { display: flex; align-items: center; gap: 8px; }
+    .group > label { color: var(--muted); font-size: 12px; }
+    .seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
+    .seg button { border: 0; background: transparent; color: var(--muted); padding: 6px 12px; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+    .toggle { border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 7px 12px; border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+    .toggle[aria-pressed="true"] { background: color-mix(in oklab, var(--accent), transparent 82%); border-color: color-mix(in oklab, var(--accent), transparent 40%); color: var(--accent-ink); }
+    .toggle kbd { font: 11px/1 ui-monospace, Consolas, monospace; padding: 2px 4px; border-radius: 4px; background: var(--surface-2); color: var(--muted); }
+    input[type="range"] { accent-color: var(--accent); width: 140px; }
+    .val { min-width: 52px; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; }
+    .badge { padding: 4px 10px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .badge.is-bad { background: #ffe1e1; color: #a01818; }
+
+    main { padding: 16px 24px 32px; display: grid; gap: 16px; }
+    .stage-wrap { border-radius: 24px; overflow: auto; border: 1px solid var(--line); box-shadow: var(--shadow); background: var(--surface); }
+    .stage { position: relative; overflow: hidden; min-width: 100%; transition: background-color .3s; }
+    .stage.bg-light { background: linear-gradient(180deg, #ffffff 0%, #f3f6fb 78%, #e9eef6 100%); }
+    .stage.bg-dark { background: radial-gradient(120% 90% at 50% 0%, #1b2742 0%, #0d1424 60%, #070b14 100%); }
+    .stage.bg-busy { background: linear-gradient(135deg, #3b2f7a 0%, #c0587e 45%, #f6a35b 100%); }
+    .deco { position: absolute; display: none; pointer-events: none; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.25); overflow: hidden; }
+    .stage.bg-busy .deco { display: block; }
+    .deco.code { left: 3%; top: 8%; width: 46%; height: 78%; background:
+      linear-gradient(#2d2f3a 0 26px, transparent 26px),
+      repeating-linear-gradient(180deg, transparent 0 9px, rgba(255,255,255,0) 9px 18px),
+      #1e1f29; }
+    .deco.code::before { content: ""; position: absolute; inset: 38px 18px 18px 18px; background:
+      linear-gradient(90deg, #c792ea 0 14%, transparent 14% 18%, #82aaff 18% 46%, transparent 46%) 0 0 / 100% 18px no-repeat,
+      linear-gradient(90deg, transparent 0 6%, #c3e88d 6% 40%, transparent 40%) 0 18px / 100% 18px no-repeat,
+      linear-gradient(90deg, transparent 0 6%, #f78c6c 6% 22%, transparent 22% 26%, #89ddff 26% 60%, transparent 60%) 0 36px / 100% 18px no-repeat,
+      linear-gradient(90deg, transparent 0 12%, #ffcb6b 12% 34%, transparent 34%) 0 54px / 100% 18px no-repeat,
+      linear-gradient(90deg, transparent 0 12%, #82aaff 12% 70%, transparent 70%) 0 72px / 100% 18px no-repeat,
+      linear-gradient(90deg, transparent 0 6%, #c792ea 6% 16%, transparent 16%) 0 90px / 100% 18px no-repeat,
+      repeating-linear-gradient(180deg, rgba(255,255,255,.07) 0 6px, transparent 6px 18px) 0 108px / 70% 100% no-repeat; }
+    .deco.doc { right: 4%; top: 14%; width: 38%; height: 64%; background:
+      linear-gradient(#e9edf5 0 28px, transparent 28px),
+      repeating-linear-gradient(180deg, transparent 0 14px, #d7dde8 14px 20px) 24px 48px / 80% 100% no-repeat, #ffffff; }
+    .deco.photo { right: 26%; top: 4%; width: 18%; height: 30%; background: radial-gradient(circle at 70% 30%, #fff6c9 0 12%, transparent 13%), linear-gradient(180deg, #7fd3ff, #c6f0ff 55%, #5bbf6a 56%, #2f8f46); }
+    .floor { position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: color-mix(in oklab, var(--muted), transparent 70%); pointer-events: none; }
+    .stage.bg-dark .floor { background: rgba(255,255,255,.08); }
+
+    .labels { position: relative; height: 44px; }
+    .label { position: absolute; top: 6px; transform: translateX(-50%); text-align: center; white-space: nowrap; pointer-events: auto; }
+    .label b { font: 600 15px/1.2 Fredoka, system-ui, sans-serif; }
+    .label span { display: block; color: var(--muted); font-size: 11px; }
+    .label input { vertical-align: middle; margin: 0 4px 0 0; accent-color: var(--accent); }
+
+    .panel { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 16px 16px; box-shadow: var(--shadow); }
+    .card h2 { margin: 0 0 8px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+    .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+    .btns button, .row button { border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); padding: 6px 12px; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; transition: transform .12s, background-color .12s, border-color .12s; }
+    .btns button:hover, .row button:hover { border-color: color-mix(in oklab, var(--accent), transparent 30%); background: color-mix(in oklab, var(--accent), transparent 88%); }
+    .btns button:active, .row button:active { transform: scale(0.96); }
+    .btns button.is-hot { background: color-mix(in oklab, var(--coral), transparent 82%); border-color: color-mix(in oklab, var(--coral), transparent 40%); }
+    .btns button.primary { background: var(--accent); border-color: transparent; color: #04252d; font-weight: 600; }
+    .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+    .row input[type="text"] { width: 64px; padding: 6px 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font-size: 16px; text-align: center; }
+    .swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); cursor: pointer; padding: 0; }
+    input[type="color"] { width: 34px; height: 30px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); padding: 2px; }
+    .hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+
+    .events { display: flex; gap: 6px; flex-wrap: wrap; min-height: 26px; }
+    .ev { padding: 3px 8px; border-radius: 999px; font: 600 11px/1.4 ui-monospace, Consolas, monospace; background: var(--surface-2); color: var(--muted); animation: ev-pop .9s ease-out forwards; }
+    @keyframes ev-pop { 0% { transform: scale(.7); background: var(--sun); color: #4a3200; } 30% { transform: scale(1); } 100% { background: var(--surface-2); color: var(--muted); } }
+
+    .stress { position: fixed; inset: 0; z-index: 50; display: none; background: rgba(8, 12, 22, 0.55); backdrop-filter: blur(4px); }
+    .stress.is-open { display: grid; place-items: center; }
+    .stress-box { width: min(1200px, 94vw); background: var(--surface); border-radius: 24px; padding: 16px; box-shadow: 0 30px 80px rgba(0,0,0,.4); }
+    .stress-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .stress-head h2 { margin: 0 auto 0 0; font-size: 18px; }
+    .stress-stage { position: relative; height: 340px; border-radius: 16px; overflow: hidden; background: linear-gradient(180deg, #fff, #eef3fa); }
+    @media (prefers-color-scheme: dark) { .stress-stage { background: linear-gradient(180deg, #16223a, #0b1220); } }
+    @media (prefers-reduced-motion: reduce) { .ev { animation: none; } }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div><h1>Avatar Lab</h1><small>Nudgi · rig, art &amp; motion inspector</small></div>
+    </div>
+    <div class="group"><label>Backdrop</label>
+      <div class="seg" id="bg-seg"><button data-bg="light" aria-pressed="true">Light</button><button data-bg="dark" aria-pressed="false">Dark</button><button data-bg="busy" aria-pressed="false">Busy</button></div>
+    </div>
+    <div class="group"><label for="scale">Height</label>
+      <input id="scale" type="range" min="120" max="480" step="2" value="250" />
+      <span class="val" id="scale-val">250 px</span>
+      <div class="seg" id="size-seg"><button data-size="190">S</button><button data-size="250" aria-pressed="true">M</button><button data-size="320">L</button></div>
+    </div>
+    <button class="toggle" id="slow" aria-pressed="false">Slow-mo 0.25× <kbd>S</kbd></button>
+    <button class="toggle" id="freeze" aria-pressed="false">Freeze <kbd>F</kbd></button>
+    <button class="toggle" id="rig" aria-pressed="false">Rig <kbd>R</kbd></button>
+    <button class="toggle" id="follow" aria-pressed="true">Eyes follow cursor</button>
+    <button class="toggle" id="stress-open">Stress × 6</button>
+    <span class="badge" id="fps">— fps</span>
+    <span class="badge" id="errors">0 errors</span>
+  </header>
+
+  <main>
+    <div class="stage-wrap">
+      <div class="stage bg-light" id="stage">
+        <div class="deco code"></div><div class="deco doc"></div><div class="deco photo"></div>
+        <div class="floor"></div>
+      </div>
+    </div>
+    <div class="labels" id="labels"></div>
+
+    <section class="panel">
+      <div class="card"><h2>Scenes</h2>
+        <div class="btns" id="scenes"></div>
+        <p class="hint">Full director-style sequences. Space replays the last command; click a buddy to poke it.</p>
+      </div>
+      <div class="card"><h2>Poses</h2><div class="btns" id="poses"></div></div>
+      <div class="card"><h2>Expressions</h2><div class="btns" id="expressions"></div>
+        <div class="row"><button id="say">Talk 1.6 s</button><button id="blink">Blink</button></div>
+      </div>
+      <div class="card"><h2>Reminder actions</h2><div class="btns" id="actions"></div></div>
+      <div class="card"><h2>Moves</h2><div class="btns" id="moves"></div></div>
+      <div class="card"><h2>Effects</h2><div class="btns" id="fx"></div></div>
+      <div class="card"><h2>Props</h2><div class="btns" id="props"></div>
+        <div class="row"><label for="emoji">Emoji</label><input id="emoji" type="text" value="⭐" maxlength="8" /></div>
+      </div>
+      <div class="card"><h2>Facing · walking · mood</h2>
+        <div class="btns" id="facing"></div>
+        <div class="row" id="walks"></div>
+        <div class="row" id="moods"></div>
+      </div>
+      <div class="card"><h2>Colour</h2>
+        <div class="row" id="swatches"></div>
+        <div class="row"><input type="color" id="color" value="#2bb3a3" /><button id="color-reset">Default colours</button></div>
+      </div>
+      <div class="card"><h2>Events (first selected)</h2><div class="events" id="events"></div>
+        <p class="hint" id="status">Ready.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="stress" id="stress" role="dialog" aria-label="Stress test">
+    <div class="stress-box">
+      <div class="stress-head"><h2>Stress test · 6 buddies</h2><span class="badge" id="stress-fps">— fps</span><button class="toggle" id="stress-close">Close</button></div>
+      <div class="stress-stage" id="stress-stage"></div>
+      <p class="hint">Six simultaneous instances with random avatars, colours, props and actions — checks id namespacing, fx layering and frame time.</p>
+    </div>
+  </div>
+
+  <script type="module" src="./gallery.js"></script>
+</body>
+</html>

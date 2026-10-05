@@ -1,0 +1,695 @@
+/* Nudgi speech bubble — two looks share one DOM:
+   - .nbb-style-comic : floating bold text, warm gradient fill, thick outer outline, white pill buttons.
+   - .nbb-style-bubble: classic white speech bubble with a tail and an accent primary button.
+   The overlay floats above arbitrary apps, so both looks stay light and high-contrast (no dark mode). */
+@import url('./fonts.css');
+
+.nbb-bubble {
+  --nbb-accent: #12b5d0;
+  --nbb-accent-ink: #06404d;
+  --nbb-ink: #10213a;
+  --nbb-muted: #5b6b82;
+  --nbb-max: 376px;
+  --nbb-spark: #ffd84a;
+  /* comic palette: fill gradient (top → bottom), outline, extrusion */
+  --nbb-c1: #fff8b8;
+  --nbb-c2: #ffea5c;
+  --nbb-c3: #ffb21f;
+  --nbb-c4: #ff8a1f;
+  --nbb-ol: #7a1e0e;
+  --nbb-ex: #4f1209;
+
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  z-index: 20;
+  font-family: 'Fredoka', 'Segoe UI Emoji', 'Segoe UI', system-ui, sans-serif;
+  font-synthesis: none;
+  font-kerning: normal;
+  color: var(--nbb-ink);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.nbb-bubble *,
+.nbb-bubble *::before,
+.nbb-bubble *::after {
+  box-sizing: border-box;
+}
+.nbb-bubble[data-state='hidden'] {
+  visibility: hidden;
+}
+
+/* ---- skeleton ------------------------------------------------------------------------------ */
+/* root = zero-size point at the card's bottom-left; the box grows upward from it */
+.nbb-box {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: max-content;
+  max-width: var(--nbb-max);
+}
+.nbb-float,
+.nbb-shape {
+  position: relative;
+}
+.nbb-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+}
+.nbb-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.nbb-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+/* during a morph both contents are pinned to the bottom centre while the card resizes */
+.nbb-content.nbb-pinned {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  translate: -50% 0;
+}
+.nbb-content.nbb-out {
+  pointer-events: none;
+}
+
+/* ---- text (built per grapheme so it can typewrite without re-wrapping) -------------------- */
+.nbb-text {
+  position: relative;
+  isolation: isolate;
+  max-width: 100%;
+  line-height: 1.12;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.nbb-word {
+  display: inline-grid;
+  white-space: pre;
+  max-width: 100%;
+}
+.nbb-word > span {
+  grid-area: 1 / 1;
+}
+.nbb-emo {
+  font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+  font-weight: 400;
+  color: #000; /* opaque so colour glyphs render; never gradient-clipped */
+}
+.nbb-h {
+  visibility: hidden;
+}
+.nbb-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- comic look ------------------------------------------------------------------------------ */
+.nbb-style-comic .nbb-card {
+  padding: 8px 10px 10px;
+}
+.nbb-style-comic .nbb-text {
+  font-weight: 700;
+  letter-spacing: 0.004em;
+  filter: drop-shadow(0 0.1em 0.16em rgb(36 10 2 / 0.3));
+}
+/* outline layer: a round, spike-free outer stroke made of offset copies (scales with font-size).
+   It sits behind every fill layer, so overlapping contours inside glyphs never show. */
+.nbb-style-comic .nbb-s {
+  position: relative;
+  z-index: -1;
+  color: var(--nbb-ol);
+  text-shadow:
+    0.19em 0 currentColor, 0.184em 0.049em currentColor, 0.165em 0.095em currentColor,
+    0.134em 0.134em currentColor, 0.095em 0.165em currentColor, 0.049em 0.184em currentColor,
+    0 0.19em currentColor, -0.049em 0.184em currentColor, -0.095em 0.165em currentColor,
+    -0.134em 0.134em currentColor, -0.165em 0.095em currentColor, -0.184em 0.049em currentColor,
+    -0.19em 0 currentColor, -0.184em -0.049em currentColor, -0.165em -0.095em currentColor,
+    -0.134em -0.134em currentColor, -0.095em -0.165em currentColor, -0.049em -0.184em currentColor,
+    0 -0.19em currentColor, 0.049em -0.184em currentColor, 0.095em -0.165em currentColor,
+    0.134em -0.134em currentColor, 0.165em -0.095em currentColor, 0.184em -0.049em currentColor,
+    0.121em 0.032em currentColor, 0.088em 0.088em currentColor, 0.032em 0.121em currentColor,
+    -0.032em 0.121em currentColor, -0.088em 0.088em currentColor, -0.121em 0.032em currentColor,
+    -0.121em -0.032em currentColor, -0.088em -0.088em currentColor, -0.032em -0.121em currentColor,
+    0.032em -0.121em currentColor, 0.088em -0.088em currentColor, 0.121em -0.032em currentColor,
+    0.06em 0 currentColor, 0.03em 0.052em currentColor, -0.03em 0.052em currentColor,
+    -0.06em 0 currentColor, -0.03em -0.052em currentColor, 0.03em -0.052em currentColor;
+  filter: drop-shadow(0 0.075em 0 var(--nbb-ex));
+}
+.nbb-style-comic .nbb-s .nbb-emo {
+  color: var(--nbb-ol);
+}
+.nbb-style-comic .nbb-f .nbb-run {
+  background: linear-gradient(180deg, var(--nbb-c1) 21%, var(--nbb-c2) 39%, var(--nbb-c3) 63%, var(--nbb-c4) 83%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.nbb-style-comic .nbb-greeting {
+  font-size: 30px;
+}
+/* a playful sticker tilt, only for short one-line greetings */
+.nbb-style-comic .nbb-greeting:not(.nbb-len-m, .nbb-len-l) {
+  rotate: -2deg;
+}
+.nbb-style-comic .nbb-question {
+  font-size: 32px;
+  margin-top: -1px;
+}
+.nbb-style-comic .nbb-question.nbb-len-m { font-size: 28px; }
+.nbb-style-comic .nbb-question.nbb-len-l { font-size: 25px; }
+.nbb-style-comic .nbb-greeting.nbb-len-l { font-size: 26px; }
+.nbb-style-comic .nbb-replytext { font-size: 34px; }
+.nbb-style-comic .nbb-replytext.nbb-len-m { font-size: 30px; }
+.nbb-style-comic .nbb-replytext.nbb-len-l { font-size: 26px; }
+.nbb-style-comic .nbb-extra {
+  font-size: 21px;
+  rotate: -1.5deg;
+  margin-bottom: 2px;
+}
+
+.nbb-mood-happy {
+  --nbb-c1: #fffcd6;
+  --nbb-c2: #fff07e;
+  --nbb-c3: #ffc53d;
+  --nbb-c4: #ff9a33;
+  --nbb-ol: #84210d;
+}
+.nbb-mood-sad {
+  --nbb-c1: #f8fbfe;
+  --nbb-c2: #e0e8f2;
+  --nbb-c3: #b4c2d6;
+  --nbb-c4: #8e9fb8;
+  --nbb-ol: #2c3953;
+  --nbb-ex: #19223a;
+  --nbb-spark: #cfe0f5;
+}
+
+/* ---- bubble look ----------------------------------------------------------------------------- */
+.nbb-style-bubble {
+  --nbb-max: 320px;
+}
+.nbb-style-bubble .nbb-shape {
+  filter: drop-shadow(0 1px 1px rgb(16 33 58 / 0.12)) drop-shadow(0 4px 10px rgb(16 33 58 / 0.1))
+    drop-shadow(0 16px 30px rgb(16 33 58 / 0.14));
+}
+.nbb-style-bubble .nbb-card {
+  min-width: 132px;
+  padding: 14px 18px 16px;
+  border-radius: 22px;
+  background: #fff;
+  overflow: hidden;
+  transition: background-color 0.4s ease;
+}
+.nbb-tail {
+  display: none;
+}
+.nbb-style-bubble .nbb-tail {
+  display: block;
+  position: absolute;
+  top: calc(100% - 1px);
+  left: 0;
+  width: 28px;
+  height: 13px;
+  fill: #fff;
+  transform-origin: 50% 0;
+  transition: fill 0.4s ease;
+}
+.nbb-style-bubble .nbb-text {
+  font-weight: 600;
+}
+.nbb-style-bubble .nbb-greeting {
+  font-size: 15px;
+  line-height: 1.3;
+  color: color-mix(in oklab, var(--nbb-accent), #10213a 42%);
+  margin-bottom: 2px;
+}
+.nbb-style-bubble .nbb-question {
+  font-size: 20px;
+  line-height: 1.22;
+  color: var(--nbb-ink);
+}
+.nbb-style-bubble .nbb-question.nbb-len-m { font-size: 18px; }
+.nbb-style-bubble .nbb-question.nbb-len-l { font-size: 16.5px; }
+.nbb-style-bubble .nbb-replytext {
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--nbb-ink);
+}
+.nbb-style-bubble .nbb-replytext.nbb-len-m { font-size: 19px; }
+.nbb-style-bubble .nbb-replytext.nbb-len-l { font-size: 17px; }
+.nbb-style-bubble .nbb-extra {
+  font-size: 14px;
+  line-height: 1.3;
+  color: var(--nbb-muted);
+  margin-bottom: 2px;
+}
+.nbb-style-bubble[data-mood='sad'] .nbb-card {
+  background: #f3f6fa;
+}
+.nbb-style-bubble[data-mood='sad'] .nbb-tail {
+  fill: #f3f6fa;
+}
+.nbb-style-bubble .nbb-mood-sad .nbb-replytext {
+  color: #4a5a74;
+}
+
+/* ---- buttons --------------------------------------------------------------------------------- */
+.nbb-actions {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+.nbb-style-bubble .nbb-actions {
+  margin-top: 12px;
+}
+.nbb-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  font: 600 15px/1 'Fredoka', 'Segoe UI Emoji', 'Segoe UI', system-ui, sans-serif;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    translate 0.22s cubic-bezier(0.3, 1.7, 0.5, 1),
+    scale 0.14s cubic-bezier(0.3, 1.6, 0.5, 1),
+    box-shadow 0.2s ease,
+    background-color 0.2s ease,
+    opacity 0.25s ease;
+}
+.nbb-btn:focus {
+  outline: none;
+}
+.nbb-btn:focus-visible {
+  outline: 2.5px solid #0a84ff;
+  outline-offset: 3px;
+}
+.nbb-btn:hover:not(:disabled) {
+  translate: 0 -2px;
+}
+.nbb-btn:active:not(:disabled) {
+  scale: 1.05 0.9;
+  translate: 0 0;
+  transition-duration: 0.06s;
+}
+.nbb-btn:disabled {
+  cursor: default;
+}
+.nbb-btn.nbb-pending {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nbb-style-comic .nbb-btn {
+  background: #fff;
+  color: #3a1d10;
+  box-shadow:
+    inset 0 -2px 0 rgb(122 30 14 / 0.08),
+    0 1px 1.5px rgb(60 20 5 / 0.18),
+    0 5px 14px rgb(30 10 0 / 0.22);
+}
+.nbb-style-comic .nbb-btn:hover:not(:disabled) {
+  box-shadow:
+    inset 0 -2px 0 rgb(122 30 14 / 0.08),
+    0 2px 3px rgb(60 20 5 / 0.18),
+    0 10px 20px rgb(30 10 0 / 0.24);
+}
+.nbb-style-comic .nbb-primary {
+  border: 2px solid transparent;
+  padding: 0 18px;
+  font-weight: 700;
+  color: #7a1e0e;
+  background:
+    linear-gradient(#fff, #fff8ec) padding-box,
+    linear-gradient(135deg, #ffdd55, #ff8a1f) border-box;
+}
+.nbb-style-comic .nbb-secondary {
+  background: #f2f3f6;
+  color: #4b3c36;
+}
+
+.nbb-style-bubble .nbb-btn {
+  font-size: 14.5px;
+}
+.nbb-style-bubble .nbb-primary {
+  padding: 0 18px;
+  background: var(--nbb-accent);
+  color: var(--nbb-accent-ink);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.28),
+    inset 0 -2px 0 rgb(0 0 0 / 0.08),
+    0 2px 6px color-mix(in oklab, var(--nbb-accent), transparent 55%);
+}
+.nbb-style-bubble .nbb-primary:hover:not(:disabled) {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.28),
+    inset 0 -2px 0 rgb(0 0 0 / 0.08),
+    0 6px 14px color-mix(in oklab, var(--nbb-accent), transparent 45%);
+}
+.nbb-style-bubble .nbb-secondary {
+  background: #eef3fa;
+  color: var(--nbb-ink);
+}
+.nbb-style-bubble .nbb-secondary:hover:not(:disabled) {
+  background: #e4ebf5;
+}
+.nbb-style-bubble .nbb-btn:focus-visible {
+  outline-color: color-mix(in oklab, var(--nbb-accent), #10213a 25%);
+}
+
+/* the primary button gives a tiny "nudge" wiggle now and then while waiting */
+.nbb-bubble[data-state='asking']:not(.nbb-answered) .nbb-primary.nbb-ready {
+  animation: nbb-nudge 7s 4.5s ease-in-out infinite;
+}
+.nbb-actions:hover .nbb-primary.nbb-ready {
+  animation: none;
+}
+@keyframes nbb-nudge {
+  0%, 9%, 100% { rotate: 0deg; }
+  1.5% { rotate: -7deg; }
+  3% { rotate: 6deg; }
+  4.5% { rotate: -4deg; }
+  6% { rotate: 2deg; }
+}
+.nbb-answered .nbb-btn:not(.nbb-chosen) {
+  opacity: 0.45;
+}
+
+/* ---- close (hover-only) ---------------------------------------------------------------------- */
+.nbb-close {
+  appearance: none;
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #6b4a3e;
+  box-shadow: 0 1px 2px rgb(16 33 58 / 0.2), 0 3px 8px rgb(16 33 58 / 0.18);
+  cursor: pointer;
+  opacity: 0;
+  scale: 0.6;
+  pointer-events: auto;
+  transition:
+    opacity 0.16s ease,
+    scale 0.24s cubic-bezier(0.3, 1.7, 0.5, 1),
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+.nbb-close svg {
+  width: 10px;
+  height: 10px;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+.nbb-style-bubble .nbb-close {
+  top: -8px;
+  right: -8px;
+  color: var(--nbb-muted);
+}
+.nbb-box:hover .nbb-close,
+.nbb-close:focus-visible {
+  opacity: 1;
+  scale: 1;
+}
+.nbb-close:hover {
+  color: #10213a;
+  background: #f4f6fa;
+}
+.nbb-close:focus {
+  outline: none;
+}
+.nbb-close:focus-visible {
+  outline: 2.5px solid #0a84ff;
+  outline-offset: 2px;
+}
+.nbb-bubble:not([data-state='asking']) .nbb-close,
+.nbb-bubble.nbb-answered .nbb-close,
+.nbb-close[hidden] {
+  display: none;
+}
+
+/* ---- auto-dismiss countdown ------------------------------------------------------------------ */
+/* A soft tint fills the "later" pill as time runs out — it reads as "I'll pick later for you". */
+.nbb-secondary {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.nbb-timer {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  transform: scaleX(0);
+  transform-origin: left center;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.35s linear, opacity 0.4s ease, background-color 0.8s ease;
+}
+.nbb-timer.is-on {
+  opacity: 1;
+}
+.nbb-style-comic .nbb-timer {
+  background: linear-gradient(90deg, rgb(255 178 31 / 0.16), rgb(255 138 31 / 0.3));
+}
+.nbb-style-bubble .nbb-timer {
+  background: color-mix(in oklab, var(--nbb-accent), transparent 78%);
+}
+.nbb-timer.is-late {
+  background: rgb(255 122 89 / 0.3);
+}
+
+/* ---- goal pips ------------------------------------------------------------------------------- */
+/* pips + label share one pill; when space runs out the label drops below the pips */
+.nbb-goal {
+  position: relative;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 10px;
+  max-width: 100%;
+  margin-top: 12px;
+  padding: 7px 14px 7px 12px;
+  border: 2px solid transparent;
+  border-radius: 20px;
+  background: linear-gradient(#fff, #fff) padding-box, linear-gradient(#fff, #fff) border-box;
+}
+.nbb-style-comic .nbb-goal {
+  box-shadow: 0 1px 1.5px rgb(60 20 5 / 0.18), 0 5px 14px rgb(30 10 0 / 0.22);
+}
+.nbb-style-bubble .nbb-goal {
+  margin-top: 10px;
+  background: linear-gradient(#f2f7fb, #f2f7fb) padding-box, linear-gradient(#f2f7fb, #f2f7fb) border-box;
+}
+.nbb-pips {
+  --pw: 16px;
+  --ph: 19px;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 3px;
+  max-width: 228px;
+}
+.nbb-pips.nbb-m { --pw: 13px; --ph: 16px; }
+.nbb-pips.nbb-s { --pw: 11px; --ph: 13px; gap: 2px; flex-wrap: wrap; }
+.nbb-pips.nbb-xs { --pw: 9px; --ph: 11px; gap: 2px; flex-wrap: wrap; max-width: 160px; }
+.nbb-pip {
+  position: relative;
+  flex: none;
+  width: var(--pw);
+  height: var(--ph);
+}
+.nbb-pip > b {
+  position: absolute;
+  inset: 0;
+  transform: scale(0);
+}
+.nbb-pip.is-on > b {
+  transform: none;
+}
+.nbb-pip > i {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  width: calc(var(--pw) * 1.5);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border: 2px solid #22bfda;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+/* droplet pips: outline drawn as background, glossy fill masked to the drop shape */
+.nbb-pip-drop {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 24'%3E%3Cpath d='M10 1.6c.5.7 7.4 8 7.4 13.6a7.4 7.4 0 0 1-14.8 0C2.6 9.6 9.5 2.3 10 1.6Z' fill='%2312B5D0' fill-opacity='.12' stroke='%2312B5D0' stroke-opacity='.55' stroke-width='1.6'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+.nbb-pip-drop > b {
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 24'%3E%3Cpath d='M10 .9c.6.8 8.2 8.8 8.2 14.3a8.2 8.2 0 0 1-16.4 0C1.8 9.7 9.4 1.7 10 .9Z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 24'%3E%3Cpath d='M10 .9c.6.8 8.2 8.8 8.2 14.3a8.2 8.2 0 0 1-16.4 0C1.8 9.7 9.4 1.7 10 .9Z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  background: radial-gradient(130% 95% at 34% 34%, #dcf9ff 0 9%, #86e5f6 26%, #27c2dc 52%, #0c93b3 82%, #0a7d9c 100%);
+  transform-origin: 50% 70%;
+}
+.nbb-pip-drop > b::after {
+  content: '';
+  position: absolute;
+  left: 27%;
+  top: 44%;
+  width: 20%;
+  height: 25%;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.85);
+  rotate: 18deg;
+}
+.nbb-pip-dot {
+  --ph: var(--pw);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--nbb-accent), transparent 45%);
+  background: color-mix(in oklab, var(--nbb-accent), transparent 88%);
+}
+.nbb-pip-dot > b {
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 32%, color-mix(in oklab, var(--nbb-accent), #fff 60%) 0 14%, var(--nbb-accent) 55%,
+      color-mix(in oklab, var(--nbb-accent), #000 22%) 100%);
+}
+.nbb-pip-dot > i {
+  top: 50%;
+  border-color: var(--nbb-accent);
+}
+.nbb-goal-label {
+  flex: none;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--nbb-ink);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.nbb-goal-label b {
+  display: inline-block;
+  font-weight: 700;
+}
+.nbb-goal-done {
+  background:
+    linear-gradient(#fffdf5, #fffdf5) padding-box,
+    linear-gradient(120deg, #ffe680, #ffb21f 55%, #ff8a1f) border-box;
+}
+.nbb-goal-done .nbb-goal-label {
+  font-weight: 700;
+  color: #b4410c;
+}
+/* a light sheen sweeps across the pill (background-position keeps it inside the rounded shape) */
+.nbb-goal-done::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(105deg, transparent 40%, rgb(255 255 255 / 0.9) 50%, transparent 60%) no-repeat;
+  background-size: 250% 100%;
+  background-position: 160% 0;
+  animation: nbb-shimmer 1.5s 0.2s ease-in-out 2;
+  pointer-events: none;
+}
+@keyframes nbb-shimmer {
+  from { background-position: 160% 0; }
+  to { background-position: -60% 0; }
+}
+
+/* ---- happy sparkles -------------------------------------------------------------------------- */
+.nbb-spark {
+  position: absolute;
+  width: var(--s, 14px);
+  height: var(--s, 14px);
+  color: var(--nbb-spark);
+  filter: drop-shadow(0 0 4px rgb(255 200 60 / 0.7));
+  pointer-events: none;
+  opacity: 0;
+  animation: nbb-twinkle 1s var(--d, 0s) ease-in-out 2 both;
+}
+.nbb-style-bubble .nbb-spark {
+  color: #ffc21a;
+  filter: drop-shadow(0 0 2px rgb(255 170 0 / 0.45));
+}
+.nbb-spark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: currentColor;
+}
+/* comic sparkles get the same dark outline as the lettering */
+.nbb-style-comic .nbb-spark svg {
+  stroke: var(--nbb-ol);
+  stroke-width: 2.4px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+@keyframes nbb-twinkle {
+  0% { opacity: 0; scale: 0.2; rotate: -30deg; }
+  45% { opacity: 1; scale: 1; rotate: 15deg; }
+  100% { opacity: 0; scale: 0.3; rotate: 60deg; }
+}
+
+/* ---- idle float ------------------------------------------------------------------------------ */
+.nbb-style-comic:is([data-state='asking'], [data-state='reply'], [data-state='hiding']) .nbb-float {
+  animation: nbb-float 2.8s ease-in-out infinite alternate;
+}
+.nbb-style-bubble:is([data-state='asking'], [data-state='reply'], [data-state='hiding']) .nbb-float {
+  animation: nbb-bob 3.4s ease-in-out infinite alternate;
+}
+@keyframes nbb-float {
+  from { translate: 0 0; rotate: -0.6deg; }
+  to { translate: 0 -3px; rotate: 0.6deg; }
+}
+@keyframes nbb-bob {
+  from { translate: 0 0; }
+  to { translate: 0 -2px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nbb-bubble .nbb-float,
+  .nbb-bubble .nbb-primary.nbb-ready,
+  .nbb-goal-done::after,
+  .nbb-spark {
+    animation: none !important;
+  }
+  .nbb-btn,
+  .nbb-close {
+    transition-duration: 0.01s;
+  }
+}

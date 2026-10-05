@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' data: blob: file:; font-src 'self' file:; connect-src 'self' file:">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Me — Nudgi avatar studio</title>
+  <link rel="stylesheet" href="../shared/fonts.css">
+  <style>
+    * { box-sizing: border-box; } body { margin: 0; color: #e7edf7; background: #10141d; font: 16px Fredoka, sans-serif; }
+    main { max-width: 1080px; margin: 28px auto; padding: 0 24px; } h1 { font-size: 28px; margin-bottom: 6px; }
+    p { color: #aab6c9; } .layout { display: grid; grid-template-columns: 1fr 310px; gap: 24px; }
+    #stage { position: relative; height: 580px; overflow: hidden; border-radius: 24px; background: radial-gradient(ellipse at 50% 80%, #293447, #191f2c 70%); border: 1px solid #303b4c; }
+    #floor { position: absolute; inset: 0 0 36px; } #stage.light { background: #edf1f8; }
+    aside { padding: 20px; background: #191f2c; border: 1px solid #303b4c; border-radius: 24px; }
+    label { display: block; margin: 14px 0 6px; color: #aab6c9; } select, button { font: inherit; color: #e7edf7; background: #293447; border: 1px solid #435169; padding: 9px 12px; border-radius: 10px; }
+    select { width: 100%; } button { cursor: pointer; } button:hover { border-color: #38d3ee; } .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    #status { font-size: 14px; color: #38d3ee; min-height: 20px; } #probe { white-space: pre-wrap; color: #aab6c9; font: 12px monospace; }
+    @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } #stage { height: 510px; } }
+  </style>
+  <script type="module" src="avatar3d.js"></script>
+</head>
+<body><main>
+  <h1>Your buddy, in 3D.</h1><p>Procedural motion for your own avatar. Move the cursor to guide its gaze.</p>
+  <div class="layout"><div id="stage"><div id="floor"></div></div><aside>
+    <div id="status">Loading your avatar…</div>
+    <label for="pose">Pose</label><select id="pose"></select>
+    <label for="action">Action</label><select id="action"></select><div class="row"><button id="play">Play action</button><button id="stop">Stop</button></div>
+    <label for="prop">Prop</label><select id="prop"></select>
+    <label for="avatar">Buddy</label><select id="avatar"></select>
+    <div class="row"><button id="left">Walk left</button><button id="right">Walk right</button><button id="front">Face front</button></div>
+    <div class="row"><button id="background">Light / dark</button><button id="debug">Anchors</button><button id="freeze">Freeze</button></div>
+    <p id="probe"></p>
+  </aside></div>
+</main></body></html>

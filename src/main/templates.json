@@ -1,0 +1,293 @@
+[
+  {
+    "key": "water",
+    "title": "Drink water",
+    "emoji": "💧",
+    "prop": "bottle",
+    "action": "drink",
+    "greeting": "Hey, {name}",
+    "question": "Did you drink water?",
+    "yesLabel": "YES",
+    "laterLabel": "Remind me later",
+    "yesReply": "Nice! 💙",
+    "laterReply": "Okay… I'll ask again in {snooze} min",
+    "schedule": {
+      "mode": "interval",
+      "every": 45,
+      "times": [
+        "10:00",
+        "16:00"
+      ],
+      "from": "09:00",
+      "to": "22:00",
+      "days": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    "snooze": 15,
+    "goal": 8
+  },
+  {
+    "key": "call",
+    "title": "Call someone",
+    "emoji": "📞",
+    "prop": "phone",
+    "action": "call",
+    "greeting": "Hey, {name}",
+    "question": "Did you call Mom today?",
+    "yesLabel": "Calling now",
+    "laterLabel": "Remind me later",
+    "yesReply": "She'll love that 💛",
+    "laterReply": "Alright, I'll nudge you in {snooze} min",
+    "schedule": {
+      "mode": "times",
+      "every": 120,
+      "times": [
+        "19:30"
+      ],
+      "from": "09:00",
+      "to": "22:00",
+      "days": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    "snooze": 30,
+    "goal": 0
+  },
+  {
+    "key": "stretch",
+    "title": "Stretch break",
+    "emoji": "🙆",
+    "prop": "none",
+    "action": "stretch",
+    "greeting": "Psst, {name}",
+    "question": "Time to stand up and stretch?",
+    "yesLabel": "Stretching!",
+    "laterLabel": "In a bit",
+    "yesReply": "Ahh, much better ✨",
+    "laterReply": "Okay, {snooze} more minutes",
+    "schedule": {
+      "mode": "interval",
+      "every": 60,
+      "times": [
+        "11:00",
+        "15:00"
+      ],
+      "from": "09:00",
+      "to": "20:00",
+      "days": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "snooze": 10,
+    "goal": 0
+  },
+  {
+    "key": "eyes",
+    "title": "Eye break (20-20-20)",
+    "emoji": "👀",
+    "prop": "glasses",
+    "action": "breathe",
+    "greeting": "Eyes up, {name}",
+    "question": "Look 20 feet away for 20 seconds?",
+    "yesLabel": "Looking away",
+    "laterLabel": "Not now",
+    "yesReply": "Your eyes say thanks 💙",
+    "laterReply": "Back in {snooze} min",
+    "schedule": {
+      "mode": "interval",
+      "every": 20,
+      "times": [
+        "11:00"
+      ],
+      "from": "09:00",
+      "to": "22:00",
+      "days": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "snooze": 5,
+    "goal": 0
+  },
+  {
+    "key": "posture",
+    "title": "Posture check",
+    "emoji": "🧍",
+    "prop": "none",
+    "action": "nod",
+    "greeting": "Quick check, {name}",
+    "question": "Shoulders back, sitting up straight?",
+    "yesLabel": "Fixed it",
+    "laterLabel": "Later",
+    "yesReply": "Looking sharp 😎",
+    "laterReply": "I'll check again in {snooze} min",
+    "schedule": {
+      "mode": "interval",
+      "every": 30,
+      "times": [
+        "11:00"
+      ],
+      "from": "09:00",
+      "to": "20:00",
+      "days": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "snooze": 10,
+    "goal": 0
+  },
+  {
+    "key": "walk",
+    "title": "Take a walk",
+    "emoji": "🚶",
+    "prop": "none",
+    "action": "cheer",
+    "greeting": "Hey, {name}",
+    "question": "Up for a quick 5-minute walk?",
+    "yesLabel": "Let's go!",
+    "laterLabel": "After this",
+    "yesReply": "Fresh air mode: ON 🌿",
+    "laterReply": "Okay, ping you in {snooze} min",
+    "schedule": {
+      "mode": "interval",
+      "every": 90,
+      "times": [
+        "13:00"
+      ],
+      "from": "10:00",
+      "to": "19:00",
+      "days": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "snooze": 20,
+    "goal": 0
+  },
+  {
+    "key": "meds",
+    "title": "Take vitamins",
+    "emoji": "💊",
+    "prop": "pill",
+    "action": "drink",
+    "greeting": "Morning check, {name}",
+    "question": "Did you take your vitamins?",
+    "yesLabel": "Took them",
+    "laterLabel": "Remind me later",
+    "yesReply": "Healthy streak! 🌟",
+    "laterReply": "I'll remind you in {snooze} min",
+    "schedule": {
+      "mode": "times",
+      "every": 120,
+      "times": [
+        "09:30"
+      ],
+      "from": "08:00",
+      "to": "22:00",
+      "days": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    "snooze": 30,
+    "goal": 0
+  },
+  {
+    "key": "breathe",
+    "title": "Deep breaths",
+    "emoji": "🌬️",
+    "prop": "none",
+    "action": "breathe",
+    "greeting": "Pause for a sec, {name}",
+    "question": "Three slow breaths with me?",
+    "yesLabel": "Breathing",
+    "laterLabel": "Not now",
+    "yesReply": "Calm and focused 🍃",
+    "laterReply": "Back in {snooze} min",
+    "schedule": {
+      "mode": "interval",
+      "every": 120,
+      "times": [
+        "15:00"
+      ],
+      "from": "09:00",
+      "to": "22:00",
+      "days": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    "snooze": 15,
+    "goal": 0
+  },
+  {
+    "key": "custom",
+    "title": "Custom reminder",
+    "emoji": "⭐",
+    "prop": "emoji",
+    "action": "cheer",
+    "greeting": "Hey, {name}",
+    "question": "Did you do the thing?",
+    "yesLabel": "Done",
+    "laterLabel": "Remind me later",
+    "yesReply": "Proud of you! 🌟",
+    "laterReply": "I'll ask again in {snooze} min",
+    "schedule": {
+      "mode": "interval",
+      "every": 60,
+      "times": [
+        "12:00"
+      ],
+      "from": "09:00",
+      "to": "22:00",
+      "days": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    "snooze": 15,
+    "goal": 0
+  }
+]

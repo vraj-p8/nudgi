@@ -1,0 +1,115 @@
+/* Nudgi — avatar engine + effects styles.
+   Injected automatically by avatar-engine.js (pages may also <link> it). Everything is pointer-transparent;
+   hit testing goes through av.hitTest(). */
+
+.nb-avatar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  transform-origin: 50% 100%;
+  overflow: visible;
+  pointer-events: none;
+  user-select: none;
+  will-change: transform;
+}
+.nb-avatar > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.nb-avatar .nb-sprite { transition: filter 420ms ease; }
+.nb-avatar .nb-sprite.is-sad { filter: saturate(0.35) brightness(0.92); }
+.nb-avatar .nb-sprite.is-happy { filter: saturate(1.15) brightness(1.04); }
+
+.nb-fx-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.nb-fx {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+  opacity: 0;
+}
+.nb-fx svg { display: block; overflow: visible; }
+
+.nb-fx-heart svg { filter: drop-shadow(0 2px 3px rgba(160, 20, 70, 0.25)); }
+.nb-fx-sparkle svg { filter: drop-shadow(0 0 4px rgba(255, 210, 80, 0.75)); }
+.nb-fx-sign svg, .nb-fx-z svg, .nb-fx-note svg { filter: drop-shadow(0 2px 2px rgba(20, 30, 60, 0.25)); }
+.nb-fx-sweat svg { filter: drop-shadow(0 1px 1.5px rgba(20, 60, 120, 0.25)); }
+
+.nb-fx-confetti { box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.12); }
+
+.nb-fx-dust {
+  border-radius: 50%;
+  background: radial-gradient(circle at 45% 40%, rgba(236, 228, 218, 0.95), rgba(196, 184, 170, 0.7) 45%, rgba(196, 184, 170, 0) 72%);
+}
+
+/* Rain cloud (follower). The wrapper is centred on its left/top point. */
+.nb-fx-cloud { opacity: 1; }
+.nb-fx-cloud-body { position: relative; filter: drop-shadow(0 3px 5px rgba(30, 40, 60, 0.18)); }
+.nb-fx-rain {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 62%;
+  height: 0;
+}
+.nb-fx-drop {
+  position: absolute;
+  top: 0;
+  border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%;
+  background: linear-gradient(#BFE6FF, #4BA9F0);
+  opacity: 0;
+}
+.nb-fx-cloud.is-storm .nb-fx-drop { background: linear-gradient(#A9C7E6, #3F7FC2); }
+.nb-fx-bolt {
+  position: absolute;
+  left: 52%;
+  top: 58%;
+  opacity: 0;
+  filter: drop-shadow(0 0 6px rgba(255, 228, 92, 0.9));
+}
+
+/* Prop micro-animations (inside the avatar SVG). */
+.nb-avatar .nb-steam path {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: nb-steam 2.6s ease-in-out infinite;
+}
+.nb-avatar .nb-steam .nb-steam-2 { animation-delay: -0.85s; }
+.nb-avatar .nb-steam .nb-steam-3 { animation-delay: -1.7s; }
+@keyframes nb-steam {
+  0% { opacity: 0; transform: translateY(5px) scale(0.8, 0.6); }
+  35% { opacity: 0.75; }
+  100% { opacity: 0; transform: translateY(-9px) scale(1.15, 1.1); }
+}
+
+.nb-avatar .nb-bubble { animation: nb-bubble 3.4s ease-in infinite; }
+.nb-avatar .nb-bubble-2 { animation-delay: -1.2s; animation-duration: 4.1s; }
+.nb-avatar .nb-bubble-3 { animation-delay: -2.4s; animation-duration: 3.8s; }
+.nb-avatar .is-glug .nb-bubble { animation-duration: 0.9s; }
+@keyframes nb-bubble {
+  0% { transform: translateY(0); opacity: 0; }
+  15% { opacity: 0.85; }
+  80% { opacity: 0.85; }
+  100% { transform: translateY(-21px); opacity: 0; }
+}
+
+/* Engine debug rig (av.debug(true)). */
+.nb-avatar .nb-debug { pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nb-avatar .nb-steam path,
+  .nb-avatar .nb-bubble { animation: none; }
+  .nb-avatar .nb-steam path { opacity: 0.45; }
+}

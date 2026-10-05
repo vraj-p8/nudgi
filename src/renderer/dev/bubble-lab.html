@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' data: blob: file:; font-src 'self' data: file:; media-src 'self' data: blob: file:; connect-src 'self' file:">
+  <title>Bubble Lab · Nudgi</title>
+  <link rel="stylesheet" href="../shared/fonts.css">
+  <link rel="stylesheet" href="../shared/bubble.css">
+  <link rel="stylesheet" href="bubble-lab.css">
+  <script type="module" src="bubble-lab.js"></script>
+</head>
+<body>
+  <header class="lab-head">
+    <div class="lab-brand">
+      <span class="lab-mark" aria-hidden="true"></span>
+      <div>
+        <h1>Bubble Lab</h1>
+        <p>Speech bubble + sound kit, on the kinds of screens Nudgi floats over. Drag the little droplets to move the anchor; click a screen's label to focus it.</p>
+      </div>
+    </div>
+    <div class="lab-seg" role="radiogroup" aria-label="Bubble style" id="style">
+      <button type="button" role="radio" aria-checked="true" data-value="comic">Comic</button>
+      <button type="button" role="radio" aria-checked="false" data-value="bubble">Bubble</button>
+    </div>
+  </header>
+
+  <main class="lab">
+    <aside class="lab-panel" aria-label="Controls">
+      <section>
+        <h2>Play</h2>
+        <div class="lab-grid">
+          <button type="button" class="primary" data-act="show">Show</button>
+          <button type="button" data-act="instant">Show instant</button>
+          <button type="button" data-act="happy">Reply 😊</button>
+          <button type="button" data-act="sad">Reply 😢</button>
+          <button type="button" data-act="streak">Sad + extra</button>
+          <button type="button" data-act="neutral">Timeout line</button>
+          <button type="button" data-act="goal">Goal +1 <span class="lab-count" id="goalCount">3/8</span></button>
+          <button type="button" data-act="goalDone">Goal reached</button>
+          <button type="button" data-act="countdown">Countdown 8s</button>
+          <button type="button" data-act="hide">Hide</button>
+          <button type="button" class="wide" data-act="run">▶ Full run (show → yes → goal → hide)</button>
+        </div>
+        <label class="lab-check"><input type="checkbox" id="autoReply" checked> Answering in a stage plays the matching reply</label>
+        <label class="lab-check"><input type="checkbox" id="realBuddy"> Use the real buddy (avatar engine) as the anchor</label>
+      </section>
+
+      <section>
+        <h2>Text</h2>
+        <label class="lab-field">Template
+          <select id="template"></select>
+        </label>
+        <label class="lab-field">Greeting <input id="greeting" maxlength="60"></label>
+        <label class="lab-field">Question <input id="question" maxlength="90"></label>
+        <div class="lab-row">
+          <label class="lab-field">Yes <input id="yesLabel" maxlength="24"></label>
+          <label class="lab-field">Later <input id="laterLabel" maxlength="24"></label>
+        </div>
+        <div class="lab-grid">
+          <button type="button" data-act="long">Longest texts</button>
+          <button type="button" data-act="emoji">Emoji stress</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Look &amp; anchor</h2>
+        <div class="lab-row">
+          <label class="lab-field">Accent <input type="color" id="accent" value="#12b5d0"></label>
+          <label class="lab-field">Screens
+            <select id="screens">
+              <option value="all">All four</option>
+              <option value="white">White document</option>
+              <option value="dark">Dark app</option>
+              <option value="code">Code editor</option>
+              <option value="wall">Wallpaper</option>
+            </select>
+          </label>
+        </div>
+        <div class="lab-grid three">
+          <button type="button" data-anchor="left">◀ Edge</button>
+          <button type="button" data-anchor="center">Center</button>
+          <button type="button" data-anchor="right">Edge ▶</button>
+          <button type="button" data-anchor="high">Too high</button>
+          <button type="button" data-act="zoom">Zoom ×3</button>
+          <button type="button" data-act="motion">Reduced motion?</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Sound</h2>
+        <div class="lab-row">
+          <label class="lab-check"><input type="checkbox" id="soundOn" checked> Sound</label>
+          <label class="lab-field slim">Volume <input type="range" id="volume" min="0" max="1" step="0.05" value="0.6"></label>
+        </div>
+        <div class="lab-grid three" id="sfx"></div>
+        <figure class="lab-wave">
+          <canvas id="wave" width="536" height="96" aria-label="Waveform of the last sound"></canvas>
+          <figcaption id="waveNote">Play a sound to see its waveform and peak level.</figcaption>
+        </figure>
+        <div class="lab-grid">
+          <button type="button" data-act="speak">🔊 Speak greeting</button>
+          <button type="button" data-act="hush">Stop voice</button>
+        </div>
+        <p class="lab-note" id="voiceNote">Voice: loading…</p>
+      </section>
+
+      <section>
+        <h2>Events</h2>
+        <ol class="lab-log" id="log" aria-live="polite"></ol>
+      </section>
+    </aside>
+
+    <div class="lab-stages" id="stages" data-show="all">
+      <div class="stage bg-white" data-bg="white">
+        <button type="button" class="stage-tag" title="Focus this screen (Esc to exit)">White document <span aria-hidden="true">⤢</span></button>
+        <div class="doc" aria-hidden="true">
+          <div class="doc-bar"><i></i><i></i><i></i><b>Quarterly notes.docx</b></div>
+          <div class="doc-page">
+            <h3>Planning notes</h3>
+            <p>Hydration goals for the team offsite, plus the agenda for Thursday's review. Bring the updated numbers and the new onboarding flow.</p>
+            <p>Next steps: confirm the venue, finalise the slide order, and share a short summary with everyone before Friday afternoon.</p>
+            <ul><li>Venue and catering</li><li>Slides: metrics, roadmap, Q&amp;A</li><li>Travel reimbursements</li></ul>
+          </div>
+        </div>
+      </div>
+      <div class="stage bg-dark" data-bg="dark">
+        <button type="button" class="stage-tag" title="Focus this screen (Esc to exit)">Dark app <span aria-hidden="true">⤢</span></button>
+        <div class="dark-app" aria-hidden="true">
+          <div class="dark-side"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="dark-main"><b></b><b></b><b class="short"></b><span></span><span></span></div>
+        </div>
+      </div>
+      <div class="stage bg-code" data-bg="code">
+        <button type="button" class="stage-tag" title="Focus this screen (Esc to exit)">Code editor (busy) <span aria-hidden="true">⤢</span></button>
+        <div class="ide" aria-hidden="true">
+          <div class="ide-title"><i></i><i></i><i></i><span>scheduler.js — Nudgi</span></div>
+          <div class="ide-body">
+            <div class="ide-activity"><i></i><i></i><i></i><i></i></div>
+            <div class="ide-tree" id="ideTree"></div>
+            <div class="ide-editor">
+              <div class="ide-tabs"><span class="on">scheduler.js</span><span>store.js</span><span>main.js</span></div>
+              <div class="ide-code" id="ideCode"></div>
+            </div>
+            <div class="ide-minimap" id="ideMini"></div>
+          </div>
+          <div class="ide-status"><span>main ↻</span><span>Ln 42, Col 18</span><span>UTF-8</span><span>JavaScript</span></div>
+        </div>
+      </div>
+      <div class="stage bg-wall" data-bg="wall">
+        <button type="button" class="stage-tag" title="Focus this screen (Esc to exit)">Warm wallpaper <span aria-hidden="true">⤢</span></button>
+        <div class="wall" aria-hidden="true"><i></i><i></i><i></i></div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

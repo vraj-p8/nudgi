@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' data: blob: file:; font-src 'self' data: file:; media-src 'self' data: blob: file:; connect-src 'self' file:" />
+  <title>Nudgi</title>
+  <link rel="stylesheet" href="../shared/fonts.css" />
+  <link rel="stylesheet" href="./settings.css" />
+  <script type="module" src="./settings.js"></script>
+</head>
+<body>
+  <header class="titlebar">
+    <div class="status" id="status" data-kind="idle">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span class="status-text" id="status-text" aria-live="polite"></span>
+      <button type="button" class="status-btn" id="status-resume" hidden>Resume</button>
+    </div>
+  </header>
+
+  <div class="app">
+    <nav class="nav" aria-label="Settings sections">
+      <div class="nav-brand">
+        <img src="../../../assets/icon.png" alt="Nudgi waving and winking" width="88" height="88" />
+        <strong>Nudgi</strong>
+        <span>Your friendly daily nudge</span>
+      </div>
+      <button type="button" class="nav-item" data-section="reminders">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z M10 20.5a2.2 2.2 0 0 0 4 0" /></svg>
+        <span class="nav-label">Reminders</span>
+      </button>
+      <button type="button" class="nav-item" data-section="buddy">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M8.6 14.2c1.9 2 4.9 2 6.8 0" /><path d="M9.2 9.6v.6M14.8 9.6v.6" stroke-width="2.4" /></svg>
+        <span class="nav-label">Buddy</span>
+      </button>
+      <button type="button" class="nav-item" data-section="general">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h9M17.5 7h2M4.5 17h3M11.5 17h8" /><circle cx="15.5" cy="7" r="2" /><circle cx="9.5" cy="17" r="2" /></svg>
+        <span class="nav-label">General</span>
+      </button>
+      <button type="button" class="nav-item" data-section="today">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19.5h14" /><rect x="6" y="11" width="3" height="6" rx="1" /><rect x="10.5" y="6.5" width="3" height="10.5" rx="1" /><rect x="15" y="9" width="3" height="8" rx="1" /></svg>
+        <span class="nav-label">Today</span>
+      </button>
+      <p class="reopen-hint">Reminders keep running when you close this window. Reopen Nudgi from your desktop or Start menu.</p>
+      <footer class="nav-foot" id="version"></footer>
+    </nav>
+
+    <main class="main" id="main" tabindex="-1">
+      <!-- ============ Reminders ============ -->
+      <section class="section" id="sec-reminders" aria-labelledby="h-reminders" hidden>
+        <div id="rem-list-view">
+          <header class="sec-head">
+            <div>
+              <h1 id="h-reminders">Reminders</h1>
+              <p class="sub">What your buddy nudges you about, and when.</p>
+            </div>
+            <button type="button" class="btn primary" id="rem-new">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>New reminder
+            </button>
+          </header>
+          <div class="cards" id="rem-cards"></div>
+          <div class="empty" id="rem-empty" hidden>
+            <div class="empty-art" aria-hidden="true">💧</div>
+            <h2>No reminders yet</h2>
+            <p>Pick a template and your buddy will start dropping by.</p>
+            <button type="button" class="btn primary" id="rem-empty-new">Create a reminder</button>
+          </div>
+        </div>
+
+        <div class="editor" id="rem-editor" hidden>
+          <header class="ed-head">
+            <button type="button" class="btn ghost square" id="ed-back" aria-label="Back to all reminders">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6" /></svg>
+            </button>
+            <span class="ed-emoji" id="ed-emoji" aria-hidden="true"></span>
+            <h1 id="ed-title"></h1>
+            <span class="save-chip" id="ed-save" data-state="saved" role="status">Saved ✓</span>
+            <label class="inline-switch"><input type="checkbox" class="switch" id="ed-enabled" /><span>Active</span></label>
+          </header>
+
+          <div class="ed-split">
+            <form class="ed-form" id="ed-form" novalidate autocomplete="off">
+              <section class="group" aria-labelledby="g-basics">
+                <h2 id="g-basics">Basics</h2>
+                <div id="ed-basics"></div>
+                <div class="field" data-field="emoji">
+                  <div class="label-row"><label for="f-emoji">Emoji</label></div>
+                  <div class="emoji-row">
+                    <input id="f-emoji" class="input emoji-input" data-key="emoji" aria-label="Any emoji" />
+                    <div class="emoji-quick" id="emoji-quick" role="group" aria-label="Quick emoji"></div>
+                  </div>
+                  <p class="err" aria-live="polite"></p>
+                </div>
+                <div class="field">
+                  <div class="label-row"><span class="label" id="l-prop">What buddy holds</span></div>
+                  <div class="tiles" id="prop-tiles" role="radiogroup" aria-labelledby="l-prop"></div>
+                </div>
+                <div class="field">
+                  <div class="label-row"><span class="label" id="l-action">After YES buddy will…</span></div>
+                  <div class="chips" id="action-chips" role="radiogroup" aria-labelledby="l-action"></div>
+                </div>
+              </section>
+
+              <section class="group" aria-labelledby="g-words">
+                <h2 id="g-words">What buddy says</h2>
+                <div class="ph-bar" id="ph-bar">
+                  <span class="ph-label">Insert</span>
+                  <button type="button" class="ph" data-ph="{name}">{name}</button>
+                  <button type="button" class="ph" data-ph="{snooze}">{snooze}</button>
+                  <button type="button" class="ph" data-ph="{count}">{count}</button>
+                  <button type="button" class="ph" data-ph="{goal}">{goal}</button>
+                </div>
+                <div id="ed-words"></div>
+              </section>
+
+              <section class="group" aria-labelledby="g-when">
+                <h2 id="g-when">Schedule</h2>
+                <div class="seg" id="f-mode" role="radiogroup" aria-label="Schedule type">
+                  <button type="button" role="radio" data-value="interval">Every few minutes</button>
+                  <button type="button" role="radio" data-value="times">At set times</button>
+                </div>
+                <div id="mode-interval">
+                  <div class="field" data-field="every">
+                    <div class="label-row"><label for="f-every">Every</label></div>
+                    <div class="inline">
+                      <input id="f-every" class="input num" type="number" min="1" max="1440" data-key="every" />
+                      <span class="unit">minutes</span>
+                      <div class="chips presets" id="every-presets">
+                        <button type="button" class="chip" data-every="20">20</button>
+                        <button type="button" class="chip" data-every="30">30</button>
+                        <button type="button" class="chip" data-every="45">45</button>
+                        <button type="button" class="chip" data-every="60">60</button>
+                        <button type="button" class="chip" data-every="90">90</button>
+                      </div>
+                    </div>
+                    <p class="err" aria-live="polite"></p>
+                  </div>
+                  <div class="field" data-field="hours">
+                    <div class="label-row"><span class="label">Active hours</span></div>
+                    <div class="inline">
+                      <input id="f-from" class="input time" type="time" data-key="from" aria-label="From" />
+                      <span class="unit">to</span>
+                      <input id="f-to" class="input time" type="time" data-key="to" aria-label="To" />
+                    </div>
+                    <p class="err" aria-live="polite"></p>
+                  </div>
+                </div>
+                <div id="mode-times" hidden>
+                  <div class="field" data-field="times">
+                    <div class="label-row"><span class="label">Times</span></div>
+                    <div class="times" id="f-times"></div>
+                    <p class="err" aria-live="polite"></p>
+                  </div>
+                </div>
+                <div class="field" data-field="days">
+                  <div class="label-row">
+                    <span class="label" id="l-days">Days</span>
+                    <span class="quick">
+                      <button type="button" class="link" data-days="12345">Weekdays</button>
+                      <button type="button" class="link" data-days="0123456">Every day</button>
+                    </span>
+                  </div>
+                  <div class="days" id="f-days" role="group" aria-labelledby="l-days"></div>
+                  <p class="err" aria-live="polite"></p>
+                </div>
+              </section>
+
+              <section class="group" aria-labelledby="g-more">
+                <h2 id="g-more">Details</h2>
+                <div class="two">
+                  <div class="field" data-field="snooze">
+                    <div class="label-row"><label for="f-snooze">“Later” snoozes for</label></div>
+                    <div class="inline"><input id="f-snooze" class="input num" type="number" min="1" max="240" data-key="snooze" /><span class="unit">minutes</span></div>
+                    <p class="err" aria-live="polite"></p>
+                  </div>
+                  <div class="field" data-field="goal">
+                    <div class="label-row"><label for="f-goal">Daily goal</label></div>
+                    <div class="inline"><input id="f-goal" class="input num" type="number" min="0" max="30" data-key="goal" /><span class="unit" id="goal-unit">times a day</span></div>
+                    <p class="err" aria-live="polite"></p>
+                  </div>
+                </div>
+                <div class="field">
+                  <div class="label-row"><label for="f-avatar">Buddy for this reminder</label></div>
+                  <select id="f-avatar" class="input" data-key="avatarId"></select>
+                </div>
+              </section>
+            </form>
+
+            <aside class="ed-preview" aria-label="Live preview">
+              <div class="stage" id="pv-stage">
+                <div class="stage-window" aria-hidden="true"><i></i><i></i><i></i></div>
+              </div>
+              <div class="pv-row">
+                <button type="button" class="btn soft" id="pv-yes">Preview YES</button>
+                <button type="button" class="btn soft" id="pv-later">Preview Later</button>
+                <button type="button" class="btn ghost square" id="pv-replay" aria-label="Ask again" title="Ask again">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2.1-5" /><path d="M5 4.5V9h4.5" /></svg>
+                </button>
+              </div>
+              <button type="button" class="btn primary wide" id="pv-test">Test on desktop ▶</button>
+              <button type="button" class="btn danger-ghost wide" id="ed-delete">Delete reminder</button>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Buddy ============ -->
+      <section class="section" id="sec-buddy" aria-labelledby="h-buddy" hidden>
+        <header class="sec-head">
+          <div>
+            <h1 id="h-buddy">Buddy</h1>
+            <p class="sub">Who visits your desktop, and how they show up.</p>
+          </div>
+        </header>
+        <div id="buddy-groups">
+          <div class="block" id="buddy-builtin">
+            <h2 class="block-title">Choose your buddy</h2>
+            <div class="buddy-cards" id="buddy-cards" role="radiogroup" aria-label="Buddy"></div>
+          </div>
+        </div>
+
+        <div class="block panel pad">
+          <button type="button" class="btn soft" id="avatar-guide-toggle" aria-expanded="false" aria-controls="avatar-guide">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+            Make it yours · Avatar guide
+          </button>
+          <div id="avatar-guide" hidden>
+            <h2 class="block-title">Create your own 3D buddy</h2>
+            <ol>
+              <li>Create and customize a humanoid avatar at Avaturn.</li>
+              <li>Export a T-pose GLB with its skeleton and embedded textures (up to 25 MB).</li>
+              <li>Import it here, then test a reminder to check the fit and movement.</li>
+            </ol>
+            <p class="muted">Kai is included. Imported avatars stay on this computer. Avaturn is a separate service with its own terms and privacy policy. Supported rigs use standard Avaturn bone names; other models may need adjustments.</p>
+            <div class="avatar-guide-actions">
+              <button type="button" class="btn soft" id="avatar-create">Open avaturn.me ↗</button>
+              <button type="button" class="btn primary" id="avatar-import">Import 3D avatar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2 class="block-title">Accent color</h2>
+          <div class="panel pad">
+            <div class="swatches" id="buddy-swatches" role="radiogroup" aria-label="Accent color"></div>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2 class="block-title">Look &amp; arrival</h2>
+          <div class="panel">
+            <div class="row">
+              <div class="row-text"><span class="row-title">Size</span><span class="row-sub">How tall your buddy stands on screen.</span></div>
+              <div class="seg hints" data-setting="size" role="radiogroup" aria-label="Size">
+                <button type="button" role="radio" data-value="s"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="2" /><path d="M9.5 20v-1.5a2.5 2.5 0 0 1 5 0V20" /></svg>Small</button>
+                <button type="button" role="radio" data-value="m"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="10" r="2.8" /><path d="M8 20v-2.5a4 4 0 0 1 8 0V20" /></svg>Medium</button>
+                <button type="button" role="radio" data-value="l"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="3.6" /><path d="M6.5 20.5v-3.5a5.5 5.5 0 0 1 11 0v3.5" /></svg>Large</button>
+              </div>
+            </div>
+            <div class="row">
+              <div class="row-text"><span class="row-title">Side</span><span class="row-sub">Which edge of the screen they hang out on.</span></div>
+              <div class="seg hints" data-setting="side" role="radiogroup" aria-label="Side">
+                <button type="button" role="radio" data-value="left"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="13" rx="2" /><rect x="5" y="12" width="3" height="4" rx="1" fill="currentColor" stroke="none" /></svg>Left</button>
+                <button type="button" role="radio" data-value="right"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="13" rx="2" /><rect x="16" y="12" width="3" height="4" rx="1" fill="currentColor" stroke="none" /></svg>Right</button>
+              </div>
+            </div>
+            <div class="row">
+              <div class="row-text"><span class="row-title">Entrance</span><span class="row-sub">How they arrive with a reminder.</span></div>
+              <div class="seg hints" data-setting="entrance" role="radiogroup" aria-label="Entrance">
+                <button type="button" role="radio" data-value="walk"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h12M12 14.5L15.5 18 12 21.5" /><ellipse cx="7" cy="8" rx="1.8" ry="2.6" /><ellipse cx="13" cy="6" rx="1.8" ry="2.6" /></svg>Walk in</button>
+                <button type="button" role="radio" data-value="drop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11a8 8 0 0 1 16 0z" /><path d="M12 11v7.5a1.8 1.8 0 0 1-3.6 0" /></svg>Drop in</button>
+                <button type="button" role="radio" data-value="peek"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 4v16" /><path d="M20.5 7.5a7.5 7.5 0 0 0 0 9" /><circle cx="17.3" cy="11" r="1" fill="currentColor" stroke="none" /></svg>Peek</button>
+                <button type="button" role="radio" data-value="random"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="4.5" width="15" height="15" rx="3.5" /><circle cx="9" cy="9" r="1" fill="currentColor" stroke="none" /><circle cx="15" cy="15" r="1" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" /></svg>Surprise me</button>
+              </div>
+            </div>
+            <div class="row">
+              <div class="row-text"><span class="row-title">Speech bubble</span><span class="row-sub">Bold comic lettering, or a soft rounded bubble.</span></div>
+              <div class="seg hints" data-setting="bubbleStyle" role="radiogroup" aria-label="Speech bubble style">
+                <button type="button" role="radio" data-value="comic"><span class="hint-comic" aria-hidden="true">Hey!</span>Comic</button>
+                <button type="button" role="radio" data-value="bubble"><span class="hint-bubble" aria-hidden="true">Hey!</span>Bubble</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ General ============ -->
+      <section class="section" id="sec-general" aria-labelledby="h-general" hidden>
+        <header class="sec-head">
+          <div>
+            <h1 id="h-general">General</h1>
+            <p class="sub">How your buddy talks to you, and when they stay away.</p>
+          </div>
+        </header>
+
+        <div class="block">
+          <div class="panel">
+            <div class="row">
+              <div class="row-text">
+                <label class="row-title" for="g-name">Your name</label>
+                <span class="row-sub">Used wherever a reminder says {name}.</span>
+              </div>
+              <div class="row-ctl">
+                <span class="name-hint" aria-hidden="true">Hey, <b id="g-name-hint"></b></span>
+                <div class="field compact" data-field="userName">
+                  <input id="g-name" class="input" />
+                  <p class="err" aria-live="polite"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2 class="block-title">Sound &amp; voice</h2>
+          <div class="panel">
+            <label class="row">
+              <span class="row-text"><span class="row-title">Sound effects</span><span class="row-sub">Soft chimes, pops and footsteps.</span></span>
+              <input type="checkbox" class="switch" data-setting="sound" />
+            </label>
+            <div class="row" id="g-volume-row">
+              <div class="row-text"><label class="row-title" for="g-volume">Volume</label></div>
+              <div class="row-ctl">
+                <input type="range" id="g-volume" class="range" min="0" max="1" step="0.05" data-setting="volume" />
+                <button type="button" class="btn soft small" id="g-test-sound">Test</button>
+              </div>
+            </div>
+            <label class="row">
+              <span class="row-text"><span class="row-title">Read reminders aloud</span><span class="row-sub">Your buddy speaks the greeting and question.</span></span>
+              <input type="checkbox" class="switch" data-setting="voice" />
+            </label>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2 class="block-title">Behavior</h2>
+          <div class="panel">
+            <div class="row">
+              <div class="row-text"><label class="row-title" for="g-dismiss">Leave after</label><span class="row-sub">If you don't answer, buddy heads off on their own.</span></div>
+              <div class="row-ctl">
+                <div class="field compact" data-field="autoDismissSec">
+                  <div class="inline"><input id="g-dismiss" class="input num" type="number" min="15" max="600" /><span class="unit">seconds</span></div>
+                  <p class="err" aria-live="polite"></p>
+                </div>
+              </div>
+            </div>
+            <label class="row">
+              <span class="row-text"><span class="row-title">Wait while I'm away</span><span class="row-sub">Hold reminders while the computer is idle or locked.</span></span>
+              <input type="checkbox" class="switch" data-setting="idleAware" />
+            </label>
+            <label class="row">
+              <span class="row-text"><span class="row-title">Launch at login</span><span class="row-sub">Start Nudgi quietly with Windows.</span></span>
+              <input type="checkbox" class="switch" data-setting="launchAtLogin" />
+            </label>
+            <div class="row">
+              <div class="row-text"><span class="row-title" id="l-hotkey">Summon shortcut</span><span class="row-sub" id="g-hotkey-sub">Calls your buddy over right now.</span></div>
+              <div class="row-ctl">
+                <button type="button" class="hotkey" id="g-hotkey" aria-labelledby="l-hotkey g-hotkey"></button>
+                <button type="button" class="btn ghost small" id="g-hotkey-clear">Clear</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2 class="block-title">Pause</h2>
+          <div class="panel">
+            <div class="row wrap">
+              <div class="row-text"><span class="row-title">Take a break</span><span class="row-sub" id="g-pause-sub"></span></div>
+              <div class="row-ctl chips" id="g-pause">
+                <button type="button" class="chip" data-pause="30">30 min</button>
+                <button type="button" class="chip" data-pause="60">1 hour</button>
+                <button type="button" class="chip" data-pause="120">2 hours</button>
+                <button type="button" class="chip" data-pause="tomorrow">Until tomorrow</button>
+                <button type="button" class="chip accent" data-pause="resume" hidden>Resume now</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2 class="block-title">Data</h2>
+          <div class="panel">
+            <div class="row">
+              <div class="row-text"><span class="row-title">Reset stats</span><span class="row-sub">Clears every count, chart and streak. Reminders stay.</span></div>
+              <button type="button" class="btn danger-ghost small" id="g-reset">Reset stats</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Today ============ -->
+      <section class="section" id="sec-today" aria-labelledby="h-today" hidden>
+        <header class="sec-head">
+          <div>
+            <h1 id="h-today">Today</h1>
+            <p class="sub" id="today-date"></p>
+          </div>
+        </header>
+        <div class="today" id="today-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog class="dialog" id="gallery" aria-labelledby="gallery-title">
+    <header class="dialog-head">
+      <div>
+        <h2 id="gallery-title">New reminder</h2>
+        <p class="sub">Start from a template — you can change every word.</p>
+      </div>
+      <button type="button" class="btn ghost square" id="gallery-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" /></svg>
+      </button>
+    </header>
+    <div class="gallery" id="gallery-tiles"></div>
+  </dialog>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+</body>
+</html>

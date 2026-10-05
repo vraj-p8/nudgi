@@ -1,0 +1,15 @@
+node_modules/
+dist/
+output/
+.env
+.env.*
+!.env.example
+*.log
+.claude/settings.local.json
+.DS_Store
+Thumbs.db
+src/renderer/shared/avatars/models/*.glb
+HANDOFF.md
+docs/SPEC*.md
+assets/brand/
+.claude/
