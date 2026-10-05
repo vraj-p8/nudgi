@@ -1,7 +1,7 @@
 {
   "name": "nudgi",
   "productName": "Nudgi",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "A tiny animated desktop buddy that walks onto your screen and nudges you to drink water, stretch, call someone, and more.",
   "main": "src/main/main.js",
   "author": "Vraj Patel",

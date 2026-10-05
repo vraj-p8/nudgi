@@ -3,7 +3,7 @@ import { createAvatar } from '../shared/avatar-engine.js';
 import { createBubble } from '../shared/bubble.js';
 import { sfx } from '../shared/sound.js';
 import { fill } from '../shared/text.js';
-import { h, debounce, wait, buddyName, dayKey } from './ui.js';
+import { h, debounce, wait, spokenBuddyName, dayKey } from './ui.js';
 
 const HEIGHT = 210;
 
@@ -34,7 +34,7 @@ export function createPreview(stageEl, app, getDraft) {
     count: app.state.stats[d.id]?.[dayKey()]?.yes || 0,
     goal: Number.isFinite(d.goal) ? d.goal : 0,
     title: d.title,
-    buddy: buddyName(who.id),
+    buddy: spokenBuddyName(who.id),
   });
   const ask = () => {
     const v = vars();

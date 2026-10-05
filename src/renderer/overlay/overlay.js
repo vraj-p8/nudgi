@@ -171,7 +171,8 @@ async function perform(ctl) {
     const s = run.settings;
     const r = run.reminder;
     const welcome = run.kind === 'welcome';
-    const vars = { ...run.vars, buddy: av.def.name };
+    // {buddy} is how the buddy introduces itself; an imported 3D avatar is the user's own twin, not "Me".
+    const vars = { ...run.vars, buddy: av.avatarId === 'me3d' ? 'your 3D twin' : av.def.name };
     const say = (key) => fill(r[key], vars).trim();
 
     await enter(ctl, s);

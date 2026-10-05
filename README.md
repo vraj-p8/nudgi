@@ -12,7 +12,7 @@ Kai walks, peeks or arrives with an umbrella, asks your reminder, and reacts to 
 
 ## Install
 
-Download **Nudgi Setup 1.1.1.exe** from [Releases](https://github.com/vraj-p8/nudgi/releases/latest).
+Download **Nudgi Setup 1.1.2.exe** from [Releases](https://github.com/vraj-p8/nudgi/releases/latest).
 Run the installer, then open Nudgi from the Start menu or desktop shortcut. A portable EXE is also available.
 Windows builds are currently unsigned.
 

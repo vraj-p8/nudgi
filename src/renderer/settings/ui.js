@@ -47,6 +47,8 @@ export const glen = (s) => {
 // ---- names shown in the UI ----
 export const BUDDY_NAMES = { me3d: 'My 3D avatar', nova: 'Kai', custom: 'Your image' };
 export const buddyName = (id) => BUDDY_NAMES[id] || BUDDY_NAMES.nova;
+/** Name used inside spoken text ({buddy}); matches the overlay. */
+export const spokenBuddyName = (id) => (id === 'me3d' ? 'your 3D twin' : buddyName(id));
 
 // ---- dates & times ----
 export const dayKey = (d = new Date()) =>

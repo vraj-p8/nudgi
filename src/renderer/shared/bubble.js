@@ -497,14 +497,16 @@ export function createBubble(host, { style = 'comic', accent = null, sound = tru
   function normalizeGoal(goal) {
     if (!goal || !(Number(goal.total) > 0)) return null;
     const total = clamp(Math.round(goal.total), 1, 30);
-    const count = clamp(Math.round(Number(goal.count) || 0), 0, total);
-    return { total, count, shape: goal.shape === 'dot' ? 'dot' : 'drop', done: count >= total };
+    // `actual` may exceed the goal (a 9th glass of 8): pips stay full, the counter keeps the true number.
+    const actual = Math.max(0, Math.round(Number(goal.count) || 0));
+    const count = Math.min(actual, total);
+    return { total, count, actual, over: actual > total, shape: goal.shape === 'dot' ? 'dot' : 'drop', done: count >= total };
   }
 
   function buildGoal(g) {
     const el = h('div', 'nbb-goal', {
       role: 'img',
-      'aria-label': `${g.count} of ${g.total} today`,
+      'aria-label': `${g.actual} of ${g.total} today`,
     });
     const size = g.total <= 8 ? '' : g.total <= 12 ? 'nbb-m' : g.total <= 20 ? 'nbb-s' : 'nbb-xs';
     const pips = h('div', ['nbb-pips', size].filter(Boolean).join(' '), { 'aria-hidden': 'true' });
@@ -512,7 +514,7 @@ export function createBubble(host, { style = 'comic', accent = null, sound = tru
     for (let i = 0; i < g.total; i++) {
       const p = h('span', `nbb-pip nbb-pip-${g.shape}`);
       p.append(h('b'), h('i'));
-      if (i < g.count - 1) p.classList.add('is-on');
+      if (i < (g.over ? g.total : g.count - 1)) p.classList.add('is-on');
       pips.append(p);
       list.push(p);
     }
@@ -522,9 +524,9 @@ export function createBubble(host, { style = 'comic', accent = null, sound = tru
       num.textContent = String(n);
       label.replaceChildren(num, ` / ${g.total} today`);
     };
-    setCount(Math.max(0, g.count - 1));
+    setCount(Math.max(0, g.actual - 1));
     el.append(pips, label);
-    const fresh = g.count > 0 ? list[g.count - 1] : null;
+    const fresh = !g.over && g.count > 0 ? list[g.count - 1] : null;
 
     const markDone = (animate) => {
       // visual only (golden pips): the counter stays the sole non-configured text
@@ -544,7 +546,7 @@ export function createBubble(host, { style = 'comic', accent = null, sound = tru
       el,
       settle() {
         fresh?.classList.add('is-on');
-        setCount(g.count);
+        setCount(g.actual);
         if (g.done) markDone(false);
       },
       async play(alive) {
@@ -555,13 +557,18 @@ export function createBubble(host, { style = 'comic', accent = null, sound = tru
           track(ring.animate([{ opacity: 0.9, transform: 'scale(0.35)' }, { opacity: 0, transform: 'scale(1.7)' }], {
             duration: 680, easing: 'cubic-bezier(.2,.7,.3,1)',
           }));
-          setCount(g.count);
+          setCount(g.actual);
           track(num.animate([{ transform: 'translateY(-0.5em) scale(1.4)', opacity: 0 }, { transform: 'none', opacity: 1 }], spring(SPRINGS.pop)));
           if (sound) sfx.play('pop');
           await wait(g.done ? 420 : 320);
           if (!alive()) return;
         }
-        if (g.done) {
+        if (g.over) {
+          // already past the goal: count up without re-running the goal celebration
+          setCount(g.actual);
+          track(num.animate([{ transform: 'translateY(-0.5em) scale(1.4)', opacity: 0 }, { transform: 'none', opacity: 1 }], spring(SPRINGS.pop)));
+          markDone(false);
+        } else if (g.done) {
           markDone(true);
           await wait(650);
         }
