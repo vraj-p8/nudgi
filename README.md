@@ -3,11 +3,16 @@
 A playful Windows desktop buddy that reminds you to drink water, stretch, call someone and take a break.
 Kai walks, peeks or arrives with an umbrella, asks your reminder, and reacts to your answer.
 
+<p align="center">
+  <img src="docs/images/nudgi-preview.webp" width="540" alt="A 3D avatar walks onto the desktop holding a bottle, asks “Hey, Vraj — did you drink water?”, drinks after YES and celebrates">
+</p>
+<p align="center"><sub>Shown with the author's own 3D avatar, imported locally. Nudgi ships with Kai; bring your own avatar with the guide below.</sub></p>
+
 ![Nudgi Buddy settings](docs/images/buddy-guide.png)
 
 ## Install
 
-Download **Nudgi Setup 1.1.0.exe** from [Releases](https://github.com/vraj-p8/nudgi/releases/latest).
+Download **Nudgi Setup 1.1.1.exe** from [Releases](https://github.com/vraj-p8/nudgi/releases/latest).
 Run the installer, then open Nudgi from the Start menu or desktop shortcut. A portable EXE is also available.
 Windows builds are currently unsigned.
 

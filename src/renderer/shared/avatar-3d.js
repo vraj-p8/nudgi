@@ -2108,8 +2108,9 @@ class Avatar3D {
           const prep = ms * 0.28;
           const air = Math.min(ms * 0.5, 1000 * Math.sqrt(8 * Math.max(0.001, height) / 9.81));
           const landMs = ms - prep - air;
+          // Anticipation: arms swing down and back with the crouch (never out to a T before the jump).
           await ctx.to({ hipY: -crouch, spinePitch: 6, chestPitch: 3, ...(arms === 'up'
-            ? { hLx: 0.4, hLy: 0.02, hLz: 0.08, hRx: -0.4, hRy: 0.02, hRz: 0.08 }
+            ? { hLx: 0.16, hLy: -0.5, hLz: -0.1, hRx: -0.16, hRy: -0.5, hRz: -0.08 }
             : { hLz: -0.04, hRz: -0.02 }) }, prep, 'inOut');
           self._emit('hop', {});
           const up = { hipY: 0.01, spinePitch: -1, chestPitch: -4 };
@@ -2346,8 +2347,9 @@ const ACTIONS3D = {
     // a little fist pump on the way down
     await c.to({ hLy: 0.3, hRy: 0.3, hLx: 0.22, hRx: -0.22 }, 260, 'inOut');
     await c.to({ hLy: 0.46, hRy: 0.46, hLx: 0.17, hRx: -0.17 }, 260, 'inOut');
-    await c.to({ hLx: 0.4, hLy: 0.04, hRx: -0.4, hRy: 0.04 }, 450, 'inOut');
-    await c.to({ hLx: 0.12, hLy: -0.42, hLz: 0.08, hRx: -0.12, hRy: -0.42, hRz: 0.1, fistL: 0, headPitch: -2, chestPitch: -3 }, 650, 'inOut');
+    // Lower along an outward arc below shoulder height in one continuous sweep (no pause at a T).
+    await c.to({ hLx: 0.3, hLy: -0.14, hLz: 0.14, hRx: -0.3, hRy: -0.14, hRz: 0.14 }, 340, 'in');
+    await c.to({ hLx: 0.12, hLy: -0.42, hLz: 0.08, hRx: -0.12, hRy: -0.42, hRz: 0.1, fistL: 0, headPitch: -2, chestPitch: -3 }, 560, 'out');
   },
 
   async nod(c) {

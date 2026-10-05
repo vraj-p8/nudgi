@@ -156,6 +156,10 @@ const CANCEL = Symbol('nb-cancel');
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const lerp = (a, b, t) => a + (b - a) * t;
 const frac = (v) => v - Math.floor(v);
+const smoothstep = (v) => {
+  const t = v < 0 ? 0 : v > 1 ? 1 : v;
+  return t * t * (3 - 2 * t);
+};
 const rand = (a, b) => a + Math.random() * (b - a);
 
 export const EASE = {
@@ -592,10 +596,36 @@ const ACTION_LIB = {
   async land(c) {
     c.face({ eyes: 'closed', mouth: 'o' });
     c.emit('land');
-    await c.to({ body: { sy: 0.78, sx: 1.14 }, armL: { rot: 55 }, forearmL: { rot: -20 }, armR: { rot: -55 }, forearmR: { rot: 20 }, head: { y: 3 } }, 95, 'out');
+    // Knees absorb the impact on jointed legs; the umbrella hand stays overhead until it is thrown.
+    const kn = c.knees;
+    const armR = (rot, fore) => (c.opts.umbrella ? {} : { armR: { rot }, ...(fore === undefined ? {} : { forearmR: { rot: fore } }) });
+    await c.to({ body: kn ? { sy: 0.96, sx: 1.02, y: 5 } : { sy: 0.78, sx: 1.14 }, armL: { rot: 55 }, forearmL: { rot: -20 }, ...armR(-55, 20), head: { y: 3 } }, 95, 'out');
     c.face({ eyes: 'open', mouth: 'grin' });
-    await c.to({ body: { sy: 1.06, sx: 0.97 }, armL: { rot: 22 }, armR: { rot: -22 }, head: { y: -1 } }, 210, 'out');
-    await c.to({ body: { sy: 1, sx: 1 }, armL: { rot: 4 }, forearmL: { rot: -7 }, armR: { rot: -4 }, forearmR: { rot: 9 }, head: { y: 0 } }, 280, 'inOut');
+    await c.to({ body: kn ? { sy: 1.02, sx: 0.99, y: -1 } : { sy: 1.06, sx: 0.97 }, armL: { rot: 22 }, ...armR(-22), head: { y: -1 } }, 210, 'out');
+    await c.to({ body: { sy: 1, sx: 1, y: 0 }, armL: { rot: 4 }, forearmL: { rot: -7 }, ...armR(-4, 9), head: { y: 0 } }, 280, 'inOut');
+  },
+
+  // Ballistic umbrella throw after a drop entrance: wind-up, release with the hand's velocity, the canopy flies off
+  // under gravity while spinning, and the reminder prop is revealed from the hip after the follow-through.
+  async throwUmbrella(c) {
+    if (c.propId !== 'umbrella') return;
+    const dir = c.opts.dir || 1;
+    c.face({ eyes: 'open', brows: 'raised', mouth: 'grin' });
+    await c.to({ torso: { rot: -dir * 4 }, head: { rot: dir * 3 }, prop: { tilt: -dir * 26 }, view: { turn: dir * 0.12 } }, 200, 'inOut');
+    c.ik('R', [100 - dir * 26, 96], 200, 'inOut');
+    await c.wait(200);
+    c.ik('R', [100 + dir * 58, 62], 170, 'in');
+    c.to({ torso: { rot: dir * 5 }, head: { rot: -dir * 2 }, prop: { tilt: dir * 34 } }, 170, 'in');
+    await c.wait(150);
+    c.toss({ vx: dir * 1.15, vy: -1.25, spin: dir * 430 });
+    c.emit('release', { dir });
+    c.ik('R', [100 + dir * 30, 214], 300, 'out');
+    await c.to({ torso: { rot: dir * 2 }, head: { rot: 0 }, prop: { tilt: 0 }, view: { turn: 0 } }, 300, 'out');
+    c.ik('R', null, 380, 'inOut');
+    await c.to({ torso: { rot: 0 } }, 200, 'inOut');
+    c.propVisible(true, 260);
+    c.face({ eyes: 'happy', mouth: 'smile' });
+    await c.wait(220);
   },
 
   async lookAround(c) {
@@ -992,6 +1022,30 @@ class Avatar {
     }
     const hipL = this._pivots.legL;
     this._legLen = hipL ? Math.max(20, this._anchors.ground[1] - hipL[1]) : 64;
+    // Legs with knee + ankle parts (thigh > shin > foot) are solved with two-bone IK; others use the pendulum gait.
+    this._knee = null;
+    const legRig = (side) => {
+      const H = this._pivots[`leg${side}`];
+      const K = this._pivots[`shin${side}`];
+      const A = this._pivots[`foot${side}`];
+      const parts = [`leg${side}`, `shin${side}`, `foot${side}`].every((n) => this._partIdx[n] !== undefined);
+      if (!parts || !H || !K || !A) return null;
+      const a = Math.hypot(K[0] - H[0], K[1] - H[1]);
+      const b = Math.hypot(A[0] - K[0], A[1] - K[1]);
+      if (a < 2 || b < 2) return null;
+      return {
+        H, A, a, b,
+        rest: [A[0] - H[0], A[1] - H[1]],
+        th0: Math.atan2(K[0] - H[0], K[1] - H[1]), // rest directions, measured from straight down toward +x
+        sh0: Math.atan2(A[0] - K[0], A[1] - K[1]),
+        out: side === 'L' ? -1 : 1,
+        half: (this._def.tuning && this._def.tuning.footHalf) || 13, // ankle → heel/toe contact corner
+        tgt: null,
+      };
+    };
+    const kL = legRig('L');
+    const kR = legRig('R');
+    if (kL && kR) this._knee = { L: kL, R: kR };
     this._front = {};
     this._bodyBox = null;
     this._headBox = null;
@@ -1283,11 +1337,31 @@ class Avatar {
     }
     // airborne dangle (drop entrance)
     const air = clamp((this._y - 10) / (20 * this._k), 0, 1);
-    if (air > 0) {
+    if (this._knee) {
+      this._legIK();
+      if (air > 0) {
+        // relaxed dangle: soft knees, toes hanging, a slow out-of-phase swing
+        const s1 = Math.sin(now * TAU * 0.7);
+        const s2 = Math.sin(now * TAU * 0.7 + 0.8);
+        add('legL.rot', air * (2 + 4 * s1));
+        add('legR.rot', air * (-2 - 4 * s2));
+        add('shinL.rot', air * (7 + 3 * s1));
+        add('shinR.rot', air * (-7 - 3 * s2));
+        add('footL.rot', air * 5);
+        add('footR.rot', air * -5);
+      }
+    } else if (air > 0) {
       add('legL.rot', air * 7 * Math.sin(now * TAU * 0.7));
       add('legR.rot', air * -6 * Math.sin(now * TAU * 0.7 + 0.8));
       add('legL.y', air * -1.5);
       add('legR.y', air * -1.5);
+    }
+    // wrists: follow-through lag behind fast forearm motion, plus a relaxed flick while walking
+    for (const side of ['L', 'R']) {
+      if (side === 'R' && (this._propOverride || this._propId) !== 'none') continue; // the grip owns a holding hand
+      const fv = this._S[`forearm${side}.rot`];
+      if (fv) add(`hand${side}.rot`, clamp(-0.045 * fv.vel, -14, 14));
+      if (walkW) add(`hand${side}.rot`, (side === 'L' ? 5 : -5) * walkW * Math.sin(TAU * g.phase + 0.9));
     }
     // cursor-follow head tilt
     const lt = this._lookTilt;
@@ -1335,26 +1409,29 @@ class Avatar {
     const sinA = g.sinA * g.w;
     const dir = g.dir;
     const w = g.w;
-    const leg = (ph) => {
-      const q = frac(ph);
-      if (q < 0.5) return { th: -dir * Math.asin((1 - 4 * q) * sinA), stance: true, s: q * 2 };
-      const s = (q - 0.5) * 2;
-      // Match the support foot's velocity at toe-off and contact (cubic Hermite).
-      const reach = sinA * (1 + 2 * s - 12 * s * s + 8 * s * s * s);
-      return { th: dir * Math.asin(clamp(reach, -0.95, 0.95)), stance: false, s };
-    };
-    const lL = leg(g.phase);
-    const lR = leg(g.phase + 0.5);
-    const stance = lL.stance ? lL : lR;
-    let bob = L * (1 - Math.cos(stance.th));
-    const bounce = 0; // support foot stays planted rather than bouncing through the floor
-    bob -= bounce;
-    add('body.y', bob);
-    const lift = g.lift * tune.lift;
-    for (const [name, l] of [['legL', lL], ['legR', lR]]) {
-      add(`${name}.rot`, l.th * R2D);
-      if (!l.stance) add(`${name}.y`, L * (1 - Math.cos(l.th)) - bob - lift * Math.sin(Math.PI * l.s) ** 2 * w);
-      else if (bounce) add(`${name}.y`, -bounce * 0.15);
+    let lL;
+    let lR;
+    if (this._knee) {
+      [lL, lR] = this._kneeGait(add, tune);
+    } else {
+      const leg = (ph) => {
+        const q = frac(ph);
+        if (q < 0.5) return { th: -dir * Math.asin((1 - 4 * q) * sinA), stance: true, s: q * 2 };
+        const s = (q - 0.5) * 2;
+        // Match the support foot's velocity at toe-off and contact (cubic Hermite).
+        const reach = sinA * (1 + 2 * s - 12 * s * s + 8 * s * s * s);
+        return { th: dir * Math.asin(clamp(reach, -0.95, 0.95)), stance: false, s };
+      };
+      lL = leg(g.phase);
+      lR = leg(g.phase + 0.5);
+      const stance = lL.stance ? lL : lR;
+      const bob = L * (1 - Math.cos(stance.th)); // the support foot stays planted
+      add('body.y', bob);
+      const lift = g.lift * tune.lift;
+      for (const [name, l] of [['legL', lL], ['legR', lR]]) {
+        add(`${name}.rot`, l.th * R2D);
+        if (!l.stance) add(`${name}.y`, L * (1 - Math.cos(l.th)) - bob - lift * Math.sin(Math.PI * l.s) ** 2 * w);
+      }
     }
     const arm = md.arm * tune.armSwing * w;
     add('armL.rot', -0.72 * lL.th * R2D * arm);
@@ -1371,6 +1448,95 @@ class Avatar {
       if (g.prevQ[i] >= 0.5 && q[i] < 0.5 && g.w > 0.15) this._emit('step', { foot: i ? 'R' : 'L' });
     }
     g.prevQ = q;
+  }
+
+  // Ankle targets for the jointed gait. Same distance sync as the pendulum gait (half stride = legLen · sinA at the
+  // ground), so planted feet do not slide. Returns pendulum-equivalent angles for the arm counter-swing.
+  _kneeGait(add, tune) {
+    const g = this._gait;
+    const K = this._knee;
+    const L = this._legLen;
+    const w = g.w;
+    const dir = g.dir;
+    const S = L * g.sinA * w;
+    const lift = g.lift * tune.lift * w;
+    const reach = 0.985 * Math.min(K.L.a + K.L.b, K.R.a + K.R.b);
+    const state = (ph) => {
+      const q = frac(ph);
+      if (q < 0.5) {
+        const u = q * 2;
+        // heel strike → flat foot → toe-off; degrees, + = toe down toward the travel direction
+        const roll = -14 * (1 - smoothstep(u / 0.18)) + 18 * smoothstep((u - 0.72) / 0.28);
+        return { dx: dir * S * (1 - 2 * u), lift: 0, roll: roll * w, stance: true, s: u };
+      }
+      const s = (q - 0.5) * 2;
+      // velocity-matched swing (cubic Hermite); the toe clears the floor, then the heel leads into contact
+      const roll = 18 - 32 * smoothstep(s) - 6 * Math.sin(Math.PI * s);
+      return { dx: -dir * S * (1 + 2 * s - 12 * s * s + 8 * s * s * s), lift: lift * Math.sin(Math.PI * s) ** 2, roll: roll * w, stance: false, s };
+    };
+    const lL = state(g.phase);
+    const lR = state(g.phase + 0.5);
+    const st = lL.stance ? lL : lR;
+    const rig = lL.stance ? K.L : K.R;
+    // Lower the hips just enough for the support leg to reach the floor with a soft knee.
+    const tx = rig.rest[0] + st.dx;
+    add('body.y', Math.max(0, rig.rest[1] - Math.sqrt(Math.max(0, reach * reach - tx * tx))));
+    for (const [k, l] of [[K.L, lL], [K.R, lR]]) {
+      k.tgt = { dx: l.dx, lift: l.lift, roll: l.roll, dir };
+      l.th = -Math.asin(clamp(l.dx / L, -0.95, 0.95));
+    }
+    return [lL, lR];
+  }
+
+  // Two-bone leg IK (hip → knee → ankle) + foot orientation. Feet stay planted while the body crouches; the walk
+  // supplies moving targets. Knees bend toward the travel/facing direction, or outward when facing the viewer.
+  _legIK() {
+    const K = this._knee;
+    const o = this._out;
+    const g = this._gait;
+    const walking = g.active && !g.hop && g.w > 0.001;
+    const bodyRot = o['body.rot'] || 0;
+    // World (unposed) → body-local: invert the body part's translate · rotate · scale about its pivot.
+    const P = this._pivots.body || [100, 300];
+    const bx = o['body.x'] || 0;
+    const by = o['body.y'] || 0;
+    const bsx = o['body.sx'] || 1;
+    const bsy = o['body.sy'] || 1;
+    const cr = Math.cos(-bodyRot * D2R);
+    const sr = Math.sin(-bodyRot * D2R);
+    const ground = this._anchors.ground[1];
+    for (const side of ['L', 'R']) {
+      const k = K[side];
+      const t = walking && k.tgt ? k.tgt : null;
+      const dir = t ? t.dir : this._facing || k.out;
+      // The rolling foot pivots about its heel or toe corner, which stays fixed on the floor.
+      const roll = t ? t.roll * D2R * dir : 0; // world foot angle, + = clockwise
+      const hx = k.half * bsx;
+      const hy = (ground - k.H[1] - k.rest[1]) * bsy;
+      const cx = Math.sign(roll); // +1 toe/heel corner on the right of the ankle, −1 on the left, 0 flat
+      const ax0 = k.H[0] + k.rest[0] + (t ? t.dx : 0) + cx * hx;
+      const ux = -cx * hx;
+      const uy = -hy;
+      const wx = ax0 + ux * Math.cos(roll) - uy * Math.sin(roll);
+      const wy = ground + ux * Math.sin(roll) + uy * Math.cos(roll) - (t ? t.lift : 0);
+      const dx0 = wx - P[0] - bx;
+      const dy0 = wy - P[1] - by;
+      const lx = P[0] + (dx0 * cr - dy0 * sr) / bsx;
+      const ly = P[1] + (dx0 * sr + dy0 * cr) / bsy;
+      const tx = lx - k.H[0];
+      const ty = ly - k.H[1];
+      const d = clamp(Math.hypot(tx, ty), Math.abs(k.a - k.b) + 0.01, (k.a + k.b) * 0.9995);
+      const phi = Math.atan2(tx, ty);
+      const alpha = Math.acos(clamp((k.a * k.a + d * d - k.b * k.b) / (2 * k.a * d), -1, 1));
+      const beta = Math.acos(clamp((k.a * k.a + k.b * k.b - d * d) / (2 * k.a * k.b), -1, 1));
+      const thigh = phi + dir * alpha;
+      const shin = thigh - dir * (Math.PI - beta);
+      const rT = -(thigh - k.th0) * R2D;
+      const rS = -(shin - thigh - (k.sh0 - k.th0)) * R2D;
+      o[`leg${side}.rot`] = rT;
+      o[`shin${side}.rot`] = rS;
+      o[`foot${side}.rot`] = roll * R2D - bodyRot - rT - rS;
+    }
   }
 
   _hopLayer(add) {
@@ -1668,6 +1834,59 @@ class Avatar {
         this._waterStr = wstr;
       }
     }
+  }
+
+  // Releases the held prop as a free-flying copy (gravity + spin, until it leaves the screen) and mounts the
+  // reminder prop hidden in the hand; the throwing action reveals it after its follow-through.
+  // vx / vy are in avatar heights per second, spin in degrees per second.
+  _tossProp({ vx = 1, vy = -1, spin = 360, gravity = 2.6 } = {}) {
+    const root = this._propRoot;
+    const world = this._fxWorld;
+    const ctm = root && world.isConnected ? root.getScreenCTM() : null;
+    if (ctm && this._propVisible > 0.01) {
+      const ns = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(ns, 'svg');
+      svg.setAttribute('aria-hidden', 'true');
+      svg.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none';
+      const g = document.createElementNS(ns, 'g');
+      g.innerHTML = root.innerHTML; // gradient references still resolve against the avatar's own defs
+      svg.append(g);
+      world.append(svg);
+      const wr = world.getBoundingClientRect();
+      const m0 = new DOMMatrix([ctm.a, ctm.b, ctm.c, ctm.d, ctm.e - wr.left, ctm.f - wr.top]);
+      const p0 = m0.transformPoint(new DOMPoint(0, 0)); // the grip point
+      const H = this._height;
+      // inherit part of the swinging hand's velocity (avatar units/s → px/s)
+      const st = { x: p0.x, y: p0.y, vx: vx * H + clamp(this._handVel[0] * this._k * 0.35, -H, H), vy: vy * H, a: 0, t: 0 };
+      const place = () => {
+        const m = new DOMMatrix().translate(st.x, st.y).rotate(st.a).translate(-p0.x, -p0.y).multiply(m0);
+        g.setAttribute('transform', `matrix(${m.a} ${m.b} ${m.c} ${m.d} ${m.e} ${m.f})`);
+      };
+      place();
+      let last = performance.now();
+      const fly = (now) => {
+        if (!svg.isConnected) return;
+        const dt = Math.min(0.05, (now - last) / 1000);
+        last = now;
+        // exact integration of constant gravity over the frame
+        st.x += st.vx * dt;
+        st.y += st.vy * dt + 0.5 * gravity * H * dt * dt;
+        st.vy += gravity * H * dt;
+        st.a += spin * dt;
+        st.t += dt;
+        place();
+        if (st.t > 4 || st.y > wr.height + H || st.x < -H * 1.5 || st.x > wr.width + H * 1.5) svg.remove();
+        else requestAnimationFrame(fly);
+      };
+      requestAnimationFrame(fly);
+    }
+    if (this._propVisAnim) {
+      this._propVisAnim();
+      this._propVisAnim = null;
+    }
+    this._propVisible = 0;
+    this._propOverride = null;
+    this._mountProp(this._propId);
   }
 
   _mountProp(id) {
@@ -2078,6 +2297,11 @@ class Avatar {
       get propId() { return self._propOverride || self._propId; },
       get propMeta() { return PROP_META[self._propOverride || self._propId] || PROP_META.none; },
       get t() { return self._clock; },
+      get knees() { return !!self._knee; },
+      toss(o) {
+        guard();
+        self._tossProp(o);
+      },
       to(values, ms = 300, ease = 'inOut') {
         guard();
         self._actTo(values, ms, ease);
@@ -2160,19 +2384,22 @@ class Avatar {
         const c = ms * 0.22;
         const air = ms * 0.56;
         const land = ms * 0.22;
+        // Jointed legs absorb with the knees (the hips dip); rigid legs squash the whole body instead.
+        const sq = self._knee ? squash * 0.45 : squash;
+        const dip = self._knee ? squash * 30 : 0;
         const up = arms === 'up' ? { armL: { rot: 150 }, armR: { rot: -150 } }
           : arms === 'out' ? { armL: { rot: 50 }, forearmL: { rot: -22 }, armR: { rot: -50 }, forearmR: { rot: 22 } } : {};
         const down = arms ? { armL: { rot: -8 }, armR: { rot: 8 } } : {};
-        await ctx.to({ body: { sy: 1 - squash, sx: 1 + squash * 0.6 }, ...down }, c, 'out');
-        ctx.to({ body: { sy: 1 + squash * 0.55, sx: 1 - squash * 0.3 }, ...up }, air * 0.32, 'out');
+        await ctx.to({ body: { sy: 1 - sq, sx: 1 + sq * 0.6, y: dip }, ...down }, c, 'out');
+        ctx.to({ body: { sy: 1 + sq * 0.55, sx: 1 - sq * 0.3 }, ...up }, air * 0.32, 'out');
         self._emit('hop', {});
         await ctx.to({ body: { y: -h } }, air / 2, 'outQuad');
         ctx.to({ body: { sy: 1, sx: 1 } }, air * 0.4, 'inOut');
         await ctx.to({ body: { y: 0 } }, air / 2, 'inQuad');
         self._emit('land', {});
-        await ctx.to({ body: { sy: 1 - squash * 1.15, sx: 1 + squash * 0.75 } }, land * 0.42, 'out');
+        await ctx.to({ body: { sy: 1 - sq * 1.15, sx: 1 + sq * 0.75, y: dip * 1.1 } }, land * 0.42, 'out');
         const rest = arms ? { armL: { rot: self._S['armL.rot']?.b1 ?? 0 }, armR: { rot: self._S['armR.rot']?.b1 ?? 0 }, forearmL: { rot: self._S['forearmL.rot']?.b1 ?? 0 }, forearmR: { rot: self._S['forearmR.rot']?.b1 ?? 0 } } : {};
-        await ctx.to({ body: { sy: 1, sx: 1 }, ...rest }, land * 0.58, 'out');
+        await ctx.to({ body: { sy: 1, sx: 1, y: 0 }, ...rest }, land * 0.58, 'out');
       },
       anchor(name) {
         return self._anchorTorso(name);

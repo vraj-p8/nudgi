@@ -268,13 +268,10 @@ async function enter(ctl, s) {
     const descentMs = clamp((H + av.height * 0.4 - GROUND) / (av.height * 1.35) * 1000, 1800, 2300);
     await guard(ctl, av.glideTo({ y: GROUND }, { ms: descentMs * (reduced() ? 0.6 : 1), ease: 'canopy', sway: reduced() ? 0 : 14 }));
     sfx.play('step', { pan: pan() });
-    if (av.avatarId === 'me3d') {
-      await guard(ctl, av.play('land', { umbrella: true }));
-      await guard(ctl, av.play('throwUmbrella', { dir: left ? -1 : 1 }));
-    } else {
-      await guard(ctl, av.play('land'));
-      await guard(ctl, av.pose('idle', { duration: 600 }));
-    }
+    await guard(ctl, av.play('land', { umbrella: true }));
+    await guard(ctl, av.play('throwUmbrella', { dir: left ? -1 : 1 }));
+    // Kai's base pose still holds the canopy grip; settle it now that the umbrella is gone.
+    if (av.avatarId !== 'me3d') av.pose('idle', { duration: 420 });
     return;
   }
 

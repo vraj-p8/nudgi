@@ -50,7 +50,9 @@ const mix = (c, w, pct) => `color-mix(in oklab, ${c}, ${w} ${pct}%)`;
 const SLEEVE_UP = 'M58.6,170 C58,160 64,155.6 70.5,155.6 C77,155.6 82.2,160.4 81.6,168 L77,199 C76.6,205 71.6,209.4 66,209.4 C60.4,209.4 55.6,205 55.6,199 Z';
 const SLEEVE_LO = 'M55.4,199 C55.4,193 60.5,188.8 66,188.8 C71.5,188.8 76.6,193 76.6,199 L75.4,219 L56.6,219 Z';
 const CUFF = 'M56.8,217.4 L75.2,217.4 L74.6,226.2 C74.5,227.8 73.4,228.8 71.8,228.8 L60.2,228.8 C58.6,228.8 57.5,227.8 57.4,226.2 Z';
-const LEG = 'M76,226 L100,226 C100.4,244 98.8,258 96.6,268 L95.8,277 L78.4,277 L77.6,268 C75.8,258 75.4,244 76,226 Z';
+// Thigh and shin overlap through a rounded knee so a bend never opens a gap.
+const THIGH = 'M76,226 L100,226 C100.3,240 99.8,252 98.7,261 C98,268.2 77,268.2 76.6,261 C75.7,252 75.5,240 76,226 Z';
+const SHIN = 'M77,257.5 C77.3,250.4 98.5,250.4 98.8,257.5 C98.5,262 97.5,265.6 96.6,268 L95.8,277 L78.4,277 L77.6,268 C77.2,264.8 76.9,261.2 77,257.5 Z';
 const LEG_CUFF = 'M77.8,270.2 L96.4,270.2 L95.6,278.4 C95.5,279.5 94.7,280.2 93.6,280.2 L80.4,280.2 C79.3,280.2 78.5,279.5 78.4,278.4 Z';
 const SOLE = 'M72.6,290.4 C72.4,296.4 75,300 79.6,300 L93.4,300 C98,300 100.6,296.4 100.4,290.4 Z';
 const UPPER = 'M73.4,291.4 C72.4,282.2 78.2,275.8 86.5,275.8 C94.8,275.8 100.6,282.2 99.6,291.4 Z';
@@ -136,7 +138,15 @@ const forearm = (mirror) => {
 const leg = (mirror) => {
   const m = mirror ? mirrorX : (d) => d;
   const g = mirror ? 'nova-jogR' : 'nova-jogL';
+  const shin = mirror ? 'shinR' : 'shinL';
+  const foot = mirror ? 'footR' : 'footL';
   return (
+    // thigh (hip joint) → shin (knee) → sneaker (ankle)
+    `<path d="${m(THIGH)}" fill="url(#${g})"/>` +
+    `<path d="${m(THIGH)}" fill="url(#nova-hemshade)"/>` +
+    `<path d="${m('M77.4,240 C76.9,249 77,256 77.6,262')}" fill="none" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="1.3" stroke-linecap="round"/>` +
+    `<g data-part="${shin}">` +
+    `<g data-part="${foot}">` +
     // chunky sneaker
     `<path d="${m(SOLE)}" fill="url(#nova-sole)"/>` +
     `<path d="${m('M74.2,294.9 L98.8,294.9')}" stroke="#2EC5DA" stroke-width="2" stroke-linecap="round"/>` +
@@ -146,13 +156,15 @@ const leg = (mirror) => {
     `<path d="${m('M82.8,281.2 L90.4,281.2 M82.8,284.4 L90.4,284.4')}" stroke="#B5C0CE" stroke-width="1.2" stroke-linecap="round"/>` +
     `<ellipse cx="${mirror ? 200 - 80 : 80}" cy="286.4" rx="4.6" ry="2.3" fill="#FFFFFF" opacity="0.95"/>` +
     `<path d="${m('M94.4,288.6 C96.6,287.4 97.8,285.4 98,283.2')}" fill="none" stroke="#C9D2DD" stroke-width="1.1" stroke-linecap="round"/>` +
-    // jogger leg
-    `<path d="${m(LEG)}" fill="url(#${g})"/>` +
-    `<path d="${m(LEG)}" fill="url(#nova-hemshade)"/>` +
-    `<path d="${m('M77.4,240 C76.8,252 77.6,263 79,272')}" fill="none" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="1.3" stroke-linecap="round"/>` +
+    `</g>` +
+    // jogger shin
+    `<path d="${m(SHIN)}" fill="url(#${g})"/>` +
+    `<path d="${m(SHIN)}" fill="url(#nova-hemshade)"/>` +
+    `<path d="${m('M77.7,262 C77.9,265.6 78.3,268.8 79,272')}" fill="none" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="1.3" stroke-linecap="round"/>` +
     `<path d="${m('M78.4,267.4 C83,270 91.6,270 96.4,267.4')}" fill="none" stroke="#000000" stroke-opacity="0.2" stroke-width="1.2" stroke-linecap="round"/>` +
     `<path d="${m(LEG_CUFF)}" style="fill: ${mix(S, 'black', 22)}"/>` +
-    `<path d="${m(ribs(80.6, 93.8, 271.6, 279, 2.2))}" stroke="#000000" stroke-opacity="0.25" stroke-width="0.8"/>`
+    `<path d="${m(ribs(80.6, 93.8, 271.6, 279, 2.2))}" stroke="#000000" stroke-opacity="0.25" stroke-width="0.8"/>` +
+    `</g>`
   );
 };
 
@@ -231,12 +243,12 @@ const svg = `
   <radialGradient id="nova-ao" gradientUnits="userSpaceOnUse" cx="100" cy="160" r="40">
     <stop offset="0" stop-color="#061217" stop-opacity="0.42"/><stop offset="0.6" stop-color="#061217" stop-opacity="0.12"/><stop offset="1" stop-color="#061217" stop-opacity="0"/>
   </radialGradient>
-  <linearGradient id="nova-jogL" x1="0" y1="0" x2="1" y2="0">
+  <linearGradient id="nova-jogL" gradientUnits="userSpaceOnUse" x1="76" y1="0" x2="100" y2="0">
     <stop offset="0" style="stop-color: ${mix(S, 'black', 8)}"/>
     <stop offset="0.38" style="stop-color: ${mix(S, 'white', 14)}"/>
     <stop offset="1" style="stop-color: ${mix(S, 'black', 32)}"/>
   </linearGradient>
-  <linearGradient id="nova-jogR" x1="0" y1="0" x2="1" y2="0">
+  <linearGradient id="nova-jogR" gradientUnits="userSpaceOnUse" x1="100" y1="0" x2="124" y2="0">
     <stop offset="0" style="stop-color: ${mix(S, 'black', 32)}"/>
     <stop offset="0.6" style="stop-color: ${mix(S, 'white', 12)}"/>
     <stop offset="1" style="stop-color: ${mix(S, 'black', 10)}"/>
@@ -298,12 +310,14 @@ const svg = `
     <g data-part="armL">
       ${sleeve(false)}
       <g data-part="forearmL">
+        <g data-part="handL">
         <g data-variant="handL:open">${handOpen(64.5, 71.4, -24)}</g>
         <g data-variant="handL:thumb">
           <rect x="57" y="225.6" width="15" height="13.4" rx="5.6" fill="url(#nova-hand)"/>
           <path d="M58.6,230 L66,230 M58.6,233.4 L66,233.4 M58.8,236.6 L65.4,236.6" stroke="#A9653F" stroke-opacity="0.45" stroke-width="1" stroke-linecap="round"/>
           <rect x="65.4" y="233.6" width="6.4" height="13.8" rx="3.2" fill="url(#nova-hand)"/>
           <ellipse cx="68.6" cy="244.6" rx="1.7" ry="1.2" fill="#F6CDAE" opacity="0.7"/>
+        </g>
         </g>
         ${forearm(false)}
       </g>
@@ -425,7 +439,7 @@ const svg = `
     <g data-part="armR">
       ${sleeve(true)}
       <g data-part="forearmR">
-        ${handOpen(135.5, 128.6, 24)}
+        <g data-part="handR">${handOpen(135.5, 128.6, 24)}</g>
         ${forearm(true)}
         <g data-slot="prop"/>
         <g data-part="grip">
@@ -447,12 +461,13 @@ export default {
   pivots: {
     body: [100, 300], torso: [100, 236], head: [100, 152], face: [100, 112],
     armL: [70, 166], forearmL: [66, 199], armR: [130, 166], forearmR: [134, 199],
-    legL: [88, 236], legR: [112, 236],
+    legL: [88, 236], legR: [112, 236], shinL: [87.6, 259], shinR: [112.4, 259], footL: [87, 281], footR: [113, 281],
+    handL: [64.5, 224.5], handR: [135.5, 224.5],
   },
   anchors: {
     top: [100, 12], mouth: [100, 128], earR: [153, 111], earL: [47, 111], chest: [100, 190],
     handL: [64.5, 232], handR: [135.5, 232], eyeL: [79, 104], eyeR: [121, 104], ground: [100, 300],
   },
-  tuning: { faceTurn: 7, pupil: [4, 3.4] },
+  tuning: { faceTurn: 7, pupil: [4, 3.4], stride: 0.82 },
   svg,
 };
