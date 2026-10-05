@@ -10,7 +10,7 @@
   "scripts": {
     "start": "electron .",
     "demo": "electron . --demo",
-    "test": "node --test test/",
+    "test": "node --test test/avatar-model.test.js test/scheduler.test.js test/store.test.js test/tray.test.js",
     "dev:web": "node scripts/dev-server.js",
     "icons": "electron scripts/make-icons.cjs",
     "build": "electron-builder --win nsis portable",
