@@ -34,12 +34,13 @@ ipcMain.on('overlay:respond', (_e, v) => events.push({ ch: 'respond', ...v }));
 ipcMain.on('overlay:done', (_e, v) => events.push({ ch: 'done', ...v }));
 ipcMain.on('window:openSettings', () => events.push({ ch: 'openSettings' }));
 app.on('browser-window-created', (_e, win) => win.webContents.on('console-message', (e) => {
-  if (e.level === 'error' || e.level === 'warning') errors.push(`${e.level}: ${e.message}`);
+  // X4122 is the Windows D3D shader compiler's precision note on three.js built-in shaders (benign).
+  if ((e.level === 'error' || e.level === 'warning') && !/warning X4122/.test(e.message)) errors.push(`${e.level}: ${e.message}`);
 }));
 require('../src/main/main');
 
 const results = [];
-const check = (name, pass, detail = '') => { results.push({ name, pass: !!pass, detail }); console.log(`${pass ? 'PASS' : 'FAIL'} ${name}${detail ? ` â€” ${detail}` : ''}`); };
+const check = (name, pass, detail = '') => { results.push({ name, pass: !!pass, detail }); console.log(`${pass ? 'PASS' : 'FAIL'} ${name}${detail ? ` Ã¢â‚¬â€ ${detail}` : ''}`); };
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 const run = (win, code) => win.webContents.executeJavaScript(`(async () => { ${code} })()`);
 const until = async (fn, ms = 20000) => { const end = Date.now() + ms; while (Date.now() < end) { try { if (await fn()) return true; } catch {} await pause(150); } return false; };
@@ -81,10 +82,10 @@ app.whenReady().then(async () => {
       const today = Object.values(st.stats.water || {})[0] || {};
       check('YES counted', today.yes === 1, JSON.stringify(st.stats));
       const next = st.runtime.next.water;
-      check('YES schedules next â‰ˆ every (45 min) or next window', next && next - t0 > 40 * 60000, `in ${Math.round((next - t0) / 60000)} min`);
+      check('YES schedules next Ã¢â€°Ë† every (45 min) or next window', next && next - t0 > 40 * 60000, `in ${Math.round((next - t0) / 60000)} min`);
       check('respond then done, once', events.filter((e) => e.ch === 'respond').length === 1 && events[0].outcome === 'yes', JSON.stringify(events));
 
-      // ---- 2. tray summon â†’ LATER â†’ streak + snooze
+      // ---- 2. tray summon Ã¢â€ â€™ LATER Ã¢â€ â€™ streak + snooze
       check('tray menu built', !!trayMenu && trayMenu.items.some((i) => /Summon/.test(i.label)), trayMenu && trayMenu.items.map((i) => i.label).join(' | '));
       await pause(21000); // main enforces a 20 s gap between real runs
       trayMenu.items.find((i) => /Summon/.test(i.label)).click();
@@ -97,13 +98,13 @@ app.whenReady().then(async () => {
       check('LATER streak = 1', st.runtime.laterStreak.water === 1, JSON.stringify(st.runtime.laterStreak));
       check('LATER snoozes ~15 min', Math.abs(st.runtime.next.water - t1 - 15 * 60000) < 90000, `in ${Math.round((st.runtime.next.water - t1) / 60000)} min`);
 
-      // ---- 3. hotkey summon â†’ Ã— dismiss
+      // ---- 3. hotkey summon Ã¢â€ â€™ Ãƒâ€” dismiss
       check('hotkey registered', !!hotkeyFn);
       await pause(21000);
       if (hotkeyFn) hotkeyFn();
       check('hotkey summon shows buddy', await asking());
       const laterText = await bubbleText();
-      check('streak escalation adds no words', !/Again|ðŸ¥º/.test(laterText), laterText);
+      check('streak escalation adds no words', !/Again|Ã°Å¸Â¥Âº/.test(laterText), laterText);
       await answer('dismiss');
       await waitDone(3);
       st = await run(settings, 'return await nudge.getState()');
@@ -166,6 +167,30 @@ app.whenReady().then(async () => {
       check('resume clears pause', st.runtime.pausedUntil === null);
       st = await run(settings, 'return await nudge.resetStats()');
       check('reset stats', Object.keys(st.stats).length === 0);
+
+      // ---- 7b. scheduling modes, enable toggle, size, hotkey and colour changes
+      st = await run(settings, `const s = await nudge.getState(); const r = { ...s.reminders[0], id: 'times1', title: 'Times test', schedule: { ...s.reminders[0].schedule, mode: 'times', times: ['23:58'], from: '00:00', to: '00:00', days: [0,1,2,3,4,5,6] } }; return await nudge.saveReminder(r)`);
+      const tn = new Date(st.runtime.next.times1);
+      check('times mode schedules the next listed time', tn.getHours() === 23 && tn.getMinutes() === 58, tn.toString());
+      st = await run(settings, `const s = await nudge.getState(); return await nudge.saveReminder({ ...s.reminders.find((r) => r.id === 'times1'), enabled: false })`);
+      check('disabling a reminder clears its next run', st.runtime.next.times1 == null, String(st.runtime.next.times1));
+      await run(settings, `return await nudge.deleteReminder('times1')`);
+      const before7 = hotkeyFn;
+      hotkeyFn = null;
+      await run(settings, `return await nudge.updateSettings({ hotkey: 'CommandOrControl+Alt+F11' })`);
+      await run(settings, `return await nudge.updateSettings({ hotkey: '' })`);
+      st = await run(settings, `return await nudge.updateSettings({ hotkey: 'CommandOrControl+Alt+F11' })`);
+      check('hotkey re-registers after change', !!hotkeyFn && st.settings.hotkey === 'CommandOrControl+Alt+F11');
+      hotkeyFn = hotkeyFn || before7;
+      for (const [size, want] of [['s', 250], ['l', 440]]) {
+        await run(settings, `return await nudge.updateSettings({ size: '${size}', avatarColor: '#E4572E', side: 'right', bubbleStyle: 'comic' })`);
+        await run(settings, 'const s = await nudge.getState(); return await nudge.testReminder(s.reminders[0])');
+        await asking();
+        const hpx = await run(overlay, 'return Math.round(document.querySelector(".nb-avatar").getBoundingClientRect().height)');
+        check(`size "${size}" renders ${want}px buddy`, Math.abs(hpx - want) <= 2, `${hpx}px`);
+        await answer('dismiss');
+        await waitDone(doneCount() + 1);
+      }
 
       // ---- 8. every settings section renders
       for (const sec of ['reminders', 'buddy', 'general', 'today']) {

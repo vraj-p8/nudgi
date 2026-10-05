@@ -13,3 +13,6 @@ HANDOFF.md
 docs/SPEC*.md
 assets/brand/
 .claude/
+
+# Bundled 3D Kai is original art (scripts/build-kai.py); personal models stay ignored
+!src/renderer/shared/avatars/models/kai.glb

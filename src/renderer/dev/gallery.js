@@ -37,7 +37,7 @@ function timeScale() {
 function build() {
   stage.style.height = `${stageHeight()}px`;
   for (const b of buddies) {
-    b.av = createAvatar(stage, {
+    b.av = createAvatar(stage, { flat: true,
       avatarId: b.info.id,
       customUrl: b.info.id === 'custom' ? SAMPLE_IMAGE : null,
       height: state.height,
@@ -307,7 +307,7 @@ function openStress() {
   const props = PROPS.map((p) => p.id);
   for (let i = 0; i < 6; i++) {
     const id = ids[i % ids.length];
-    const av = createAvatar(host, {
+    const av = createAvatar(host, { flat: true,
       avatarId: id, customUrl: id === 'custom' ? SAMPLE_IMAGE : null, height: 200,
       color: colors[i], prop: props[(i * 3) % props.length], emoji: '🌟', timeScale: timeScale(),
     });
@@ -381,7 +381,7 @@ function loupe(params) {
   const host = document.createElement('div');
   Object.assign(host.style, { position: 'absolute', left: '0', right: '0', top: '0', height: `${Math.round(floor)}px` });
   ov.appendChild(host);
-  const av = createAvatar(host, {
+  const av = createAvatar(host, { flat: true,
     avatarId: id, customUrl: id === 'custom' ? SAMPLE_IMAGE : null, height: h, prop: params.get('prop') || 'bottle',
   });
   av.x = Math.round((ov.clientWidth - av.width) / 2);

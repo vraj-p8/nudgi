@@ -12,7 +12,7 @@ Kai walks, peeks or arrives with an umbrella, asks your reminder, and reacts to 
 
 ## Install
 
-Download **Nudgi Setup 1.1.2.exe** from [Releases](https://github.com/vraj-p8/nudgi/releases/latest).
+Download **Nudgi Setup 1.2.0.exe** from [Releases](https://github.com/vraj-p8/nudgi/releases/latest).
 Run the installer, then open Nudgi from the Start menu or desktop shortcut. A portable EXE is also available.
 Windows builds are currently unsigned.
 
@@ -22,7 +22,7 @@ it and choose **Quit Nudgi** to exit. **Ctrl+Alt+B** summons your buddy. Launch 
 ## Features
 
 - Editable reminders, active hours and weekdays, snoozing and daily progress.
-- Kai, a bundled animated SVG buddy, with walking, umbrella and peek entrances.
+- Kai, a bundled 3D buddy (rigged in Blender, with a 2D fallback when WebGL is unavailable), with walking, umbrella and peek entrances.
 - Optional local 3D avatar import through **Buddy → Avatar guide**.
 - Size, color, sound, speech, entrance and screen-side controls.
 - Local storage: no Nudgi account, analytics or cloud service required.

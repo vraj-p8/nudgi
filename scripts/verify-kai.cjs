@@ -23,7 +23,7 @@ app.whenReady().then(async () => {
       const host = document.createElement('div');
       host.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#1b1e26';
       document.body.append(host);
-      window.av = createAvatar(host, { avatarId: 'nova', height: 320, prop: 'bottle' });
+      window.av = createAvatar(host, { avatarId: 'nova', flat: true, height: 320, prop: 'bottle' });
       window.foot = (side) => {
         const m = av.el.querySelector('[data-part="foot' + side + '"]').getScreenCTM();
         return (side === 'L' ? [74, 100] : [100, 126]).map((x) => new DOMPoint(x, 300).matrixTransform(m));

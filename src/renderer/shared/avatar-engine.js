@@ -139,7 +139,9 @@ import { canopyDescent, canopySway } from './entrance-motion.js';
 import { AVATAR_DEFS, AVATAR_ORDER } from './avatars/index.js';
 import { PROPS, PROP_META, renderProp, namespaceIds } from './props.js';
 import { FX, playFx } from './fx.js';
-import { createAvatar3D, ME3D_INFO } from './avatar-3d.js';
+import { createAvatar3D, ME3D_INFO, KAI3D_URL } from './avatar-3d.js';
+
+let kai3dFailed = false; // WebGL/model failure: later Kai instances go straight to the 2D rig
 
 export { PROPS, PROP_META, FX };
 
@@ -2610,8 +2612,11 @@ export function createAvatar(host, opts = {}) {
     if (!fallback) { requestedId = id; customUrl = url; }
     for (const sub of subscriptions) sub.off?.();
     previous?.destroy();
-    current = id === 'me3d'
-      ? createAvatar3D(host, { ...state, modelUrl: url, onFail: () => swap('nova', null, true) })
+    // Kai renders in 3D by default and falls back to the 2D rig when WebGL or the model is unavailable
+    // (`flat: true` asks for the 2D rig directly, e.g. for the 2D motion checks).
+    const kai3d = id === 'nova' && !fallback && !opts.flat && !kai3dFailed;
+    current = id === 'me3d' || kai3d
+      ? createAvatar3D(host, { ...state, avatarId: id, modelUrl: kai3d ? KAI3D_URL : url, onFail: () => { if (kai3d) kai3dFailed = true; swap('nova', null, true); } })
       : createAvatar2D(host, { ...state, avatarId: id, customUrl: url });
     current.y = y;
     current.pose(poseName, { duration: 0 });

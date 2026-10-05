@@ -39,6 +39,16 @@ export const ME3D_INFO = Object.freeze({
   locomotion: 'walk',
   kind: '3d',
 });
+// Bundled 3D Kai (built by scripts/build-kai.py); same public id as the 2D Kai it falls back to.
+export const KAI3D_INFO = Object.freeze({
+  id: 'nova',
+  name: 'Kai',
+  tagline: 'Hoodie-wearing desk buddy',
+  colors: { primary: '#169C8F', secondary: '#26324D', accent: '#2EC5DA' },
+  locomotion: 'walk',
+  kind: '3d',
+});
+export const KAI3D_URL = new URL('./avatars/models/kai.glb', import.meta.url).href;
 
 const MODEL_URL = new URL('./avatars/models/me.glb', import.meta.url).href;
 const MODEL_H = 1.863; // feet → hair top (m)
@@ -165,13 +175,12 @@ async function fetchArrayBuffer(url) {
   }
 }
 
-let templateP = null;
-let templateUrl = null;
+// One parsed template per model URL (Kai and an imported avatar can be on screen together, e.g. in settings).
+const templates = new Map();
 let templateUsers = 0;
 function loadTemplate(modelUrl = MODEL_URL) {
-  if (templateP && templateUrl === modelUrl) return templateP;
-  templateUrl = modelUrl;
-  templateP = (async () => {
+  if (templates.has(modelUrl)) return templates.get(modelUrl);
+  const templateP = (async () => {
     await loadLib();
     const buf = await fetchArrayBuffer(modelUrl);
     const loader = new GLTFLoaderC();
@@ -183,12 +192,16 @@ function loadTemplate(modelUrl = MODEL_URL) {
     });
     const gltf = await new Promise((res, rej) => loader.parse(buf, modelUrl.replace(/[^/]*$/, ''), res, rej));
     prepareMaterials(gltf.scene);
-    return { scene: gltf.scene, rest: buildRest(gltf.scene) };
+    // Optional per-model metadata (glTF scene extras): { height, anchors: { name: { bone, p: [x, y, z] } } }.
+    // Models without it (an imported Avaturn avatar) use the built-in defaults.
+    const meta = gltf.scene.userData && gltf.scene.userData.nudgi ? gltf.scene.userData.nudgi : null;
+    return { scene: gltf.scene, rest: buildRest(gltf.scene), meta };
   })();
   templateP.catch((e) => {
     console.error('[avatar-3d] model failed to load', e);
-    templateP = null;
+    templates.delete(modelUrl);
   });
+  templates.set(modelUrl, templateP);
   return templateP;
 }
 
@@ -581,6 +594,7 @@ class Avatar3D {
     this._opts = opts;
     this._onFail = typeof opts.onFail === 'function' ? opts.onFail : null;
     this._modelUrl = opts.modelUrl;
+    this._info = opts.avatarId === 'nova' ? KAI3D_INFO : ME3D_INFO;
     this._ts = opts.timeScale ?? 1;
     this._clock = 0;
     this._height = Math.max(40, Number(opts.height) || 360);
@@ -764,6 +778,25 @@ class Avatar3D {
     this._model = model;
     this._root.add(model);
     this._rest = tpl.rest;
+    const meta = tpl.meta || {};
+    this._modelH = Number(meta.height) > 0.5 ? Number(meta.height) : MODEL_H;
+    this._anchorDefs = meta.anchors
+      ? Object.fromEntries(Object.entries(meta.anchors).filter(([, v]) => v && v.bone && Array.isArray(v.p)).map(([k, v]) => [k, [v.bone, v.p]]))
+      : ANCHORS;
+    // Tintable cloth (the buddy colour setting): per-instance material copies so other instances keep their colour.
+    this._tint = [];
+    model.traverse((o) => {
+      if (!o.isMesh) return;
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      const out = mats.map((m) => {
+        if (!m || !/^kai_(primary|rib)/.test(m.name || '')) return m;
+        const c = m.clone();
+        this._tint.push({ m: c, base: c.color.clone(), rib: /rib/.test(m.name) });
+        return c;
+      });
+      o.material = Array.isArray(o.material) ? out : out[0];
+    });
+    if (this._color) this._applyTint(this._color);
     this._bones = {};
     model.traverse((o) => {
       if (o.isBone) this._bones[o.name] = o;
@@ -786,7 +819,7 @@ class Avatar3D {
     }
     this._W = {}; // posed model-space world rotations of driven bones
     this._anchorsM = {}; // latest model-space anchor points
-    for (const k of Object.keys(ANCHORS)) this._anchorsM[k] = new T.Vector3().fromArray(ANCHORS[k][1]);
+    for (const k of Object.keys(this._anchorDefs)) this._anchorsM[k] = new T.Vector3().fromArray(this._anchorDefs[k][1]);
     this._anchorsM.handL = R[B.handL].p.clone();
     this._anchorsM.handR = R[B.handR].p.clone();
     this._anchorsM.ground = new T.Vector3(0, 0, 0.015);
@@ -818,9 +851,19 @@ class Avatar3D {
     this._shadow = { body: mk(0.42), L: mk(0.5), R: mk(0.5) };
   }
 
+  _applyTint(hex) {
+    for (const t of this._tint || []) {
+      if (!hex) t.m.color.copy(t.base);
+      else {
+        t.m.color.set(hex);
+        if (t.rib) t.m.color.multiplyScalar(0.78);
+      }
+    }
+  }
+
   _applySize() {
     const h = this._height;
-    this._k = h / MODEL_H; // px per metre
+    this._k = h / (this._modelH || MODEL_H); // px per metre
     this._width = Math.round(h * WIDTH_F);
     this._padSide = this._throwCanvas ? Math.round(h * 1.1) : 0;
     this._cw = this._width + this._padSide * 2;
@@ -1071,7 +1114,8 @@ class Avatar3D {
     if (spec._f === this._frameN && spec._side === side) return spec._r;
     const pt = _v1.copy(this._anchorPointM(spec.anchor || 'mouth'));
     if (spec.off) {
-      const bone = (ANCHORS[spec.anchor] && ANCHORS[spec.anchor][0]) || B.spine2;
+      const defs = this._anchorDefs || ANCHORS;
+      const bone = (defs[spec.anchor] && defs[spec.anchor][0]) || B.spine2;
       pt.add(_v2.fromArray(spec.off).applyQuaternion(this._A[bone]));
     }
     if (spec.spout) pt.sub(_v2.subVectors(this._spoutM, this._wristR));
@@ -1601,7 +1645,7 @@ class Avatar3D {
     this._chain(B.shR, eulerQ(_q1, 0, F.shRFwd, -F.shRUp));
 
     // anchors on the head/chest for this frame
-    for (const [name, [bone, pt]] of Object.entries(ANCHORS)) {
+    for (const [name, [bone, pt]] of Object.entries(this._anchorDefs)) {
       const a = this._anchorsM[name];
       a.fromArray(pt).sub(R[bone].p).applyQuaternion(A[bone]).add(P[bone]);
     }
@@ -2792,8 +2836,9 @@ export function createAvatar3D(host, opts = {}) {
     get facing() { return a._facing; },
     get busy() { return !!a._action; },
     get action() { return a._action ? a._action.name : null; },
-    get def() { return ME3D_INFO; },
-    get avatarId() { return ME3D_ID; },
+    get def() { return a._info; },
+    get avatarId() { return a._info.id; },
+    get is3D() { return true; },
     get prop() { return a._propId; },
     get emoji() { return a._emoji; },
     get ready() { return a._ready; },
@@ -2964,8 +3009,11 @@ export function createAvatar3D(host, opts = {}) {
       a._wake();
     },
 
-    setColor() {
-      // the 3D avatar's look comes from its textures
+    setColor(hex) {
+      // Only models with tintable cloth (Kai's hoodie) react; an imported avatar keeps its own textures.
+      a._color = typeof hex === 'string' && /^#[0-9a-f]{6}$/i.test(hex) ? hex : null;
+      if (a._tint) a._applyTint(a._color);
+      a._wake();
     },
 
     setAvatar() {
@@ -3106,6 +3154,7 @@ export function createAvatar3D(host, opts = {}) {
   };
   a._api = api;
   api.setProp(opts.prop || 'none', opts.emoji);
+  api.setColor(opts.color ?? null);
   if (opts.facing) api.setFacing(opts.facing);
   return api;
 }

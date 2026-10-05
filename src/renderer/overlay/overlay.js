@@ -272,7 +272,7 @@ async function enter(ctl, s) {
     await guard(ctl, av.play('land', { umbrella: true }));
     await guard(ctl, av.play('throwUmbrella', { dir: left ? -1 : 1 }));
     // Kai's base pose still holds the canopy grip; settle it now that the umbrella is gone.
-    if (av.avatarId !== 'me3d') av.pose('idle', { duration: 420 });
+    if (!av.is3D) av.pose('idle', { duration: 420 });
     return;
   }
 
