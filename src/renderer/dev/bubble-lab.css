@@ -1,4 +1,4 @@
-/* Bubble Lab — dev page chrome plus four CSS-built "screens" the overlay might float above. */
+/* Bubble Lab - dev page chrome plus four CSS-built "screens" the overlay might float above. */
 :root {
   --bg: #f6f8fc;
   --surface: #ffffff;
@@ -295,7 +295,7 @@ select {
   color: var(--ink);
 }
 .lab-log:empty::before {
-  content: 'Click a bubble button — outcomes land here.';
+  content: 'Click a bubble button - outcomes land here.';
   font-family: 'Segoe UI', system-ui, sans-serif;
 }
 

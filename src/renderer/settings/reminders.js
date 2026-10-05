@@ -46,7 +46,7 @@ export function validate(d) {
   else if (s.times.some((t) => !HM.test(t))) e.times = 'Fill in every time';
   if (!s.days.length) e.days = 'Pick at least one day';
   if (!isInt(d.snooze, L.snooze)) e.snooze = 'Choose between 1 and 240 minutes';
-  if (!isInt(d.goal, L.goal)) e.goal = 'Choose 0–30 (0 turns it off)';
+  if (!isInt(d.goal, L.goal)) e.goal = 'Choose 0-30 (0 turns it off)';
   return e;
 }
 

@@ -1,6 +1,6 @@
 'use strict';
 
-// Nudgi — main process.
+// Nudgi - main process.
 // Owns the config store, the scheduler, a hidden always-on-top transparent overlay window that the buddy walks
 // across, the settings window, the tray icon and the global summon hotkey. Runs are queued and shown one at a time.
 
@@ -691,7 +691,7 @@ function watchSystem() {
   nativeTheme.on('updated', applyTheme);
 }
 
-/** No new windows, no navigation, no webviews, no permissions — for every webContents. */
+/** No new windows, no navigation, no webviews, no permissions - for every webContents. */
 function harden() {
   app.on('web-contents-created', (_e, wc) => {
     wc.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -763,7 +763,7 @@ async function looksLikeImage(file, ext) {
   }
 }
 
-/** Deletes a previously copied avatar — only ever inside userData/avatars. */
+/** Deletes a previously copied avatar - only ever inside userData/avatars. */
 function removeAvatarFile(customAvatar) {
   if (!customAvatar || typeof customAvatar.url !== 'string') return;
   try {
@@ -794,7 +794,7 @@ async function pickAvatarImage() {
   if (!IMAGE_EXTS.includes(ext)) return reject('Please choose a PNG, JPG, GIF, WebP or SVG image.');
   const stat = await fs.promises.stat(src);
   if (!stat.isFile() || stat.size === 0) return reject('That file looks empty.');
-  if (stat.size > MAX_AVATAR_BYTES) return reject('That image is larger than 8 MB — please pick a smaller one.');
+  if (stat.size > MAX_AVATAR_BYTES) return reject('That image is larger than 8 MB - please pick a smaller one.');
   if (!(await looksLikeImage(src, ext))) return reject('That file doesn’t look like a valid image.');
 
   await fs.promises.mkdir(store.avatarsDir, { recursive: true });

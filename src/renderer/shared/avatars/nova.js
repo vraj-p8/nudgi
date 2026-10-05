@@ -1,4 +1,4 @@
-// Nova — the default buddy: a cozy, hoodie-wearing young adult with fluffy espresso hair.
+// Nova - the default buddy: a cozy, hoodie-wearing young adult with fluffy espresso hair.
 // Reference implementation of the avatar contract (see the header of ../avatar-engine.js).
 // Pure data: the engine drives every data-part / data-variant / data-jiggle element.
 
@@ -69,7 +69,7 @@ const HAIR_CAP = smooth([
   [46, 96], [40.5, 82], [41, 67], [47, 53], [57, 41], [69, 32], [83, 25.5], [98, 22.5], [113, 23], [127, 27], [140, 34.5],
   [151, 45], [158, 58], [160.5, 72], [158, 86], [152, 96], [144, 76], [128, 66], [100, 62], [72, 66], [56, 78],
 ]);
-// [root, ctrl, tip, rootWidth, tipWidth] — drawn back to front, so clumps nearer the parting overlap the next one.
+// [root, ctrl, tip, rootWidth, tipWidth] - drawn back to front, so clumps nearer the parting overlap the next one.
 const CLUMPS = [
   [[148, 62], [161, 82], [153.5, 101], 18, 3.4], // right temple lock
   [[54, 62], [41, 80], [49, 98], 16, 3.4], // left temple lock

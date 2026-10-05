@@ -1,4 +1,4 @@
-// Nudgi overlay — the director. Receives one run at a time from main (nudge.onRun) and choreographs it:
+// Nudgi overlay - the director. Receives one run at a time from main (nudge.onRun) and choreographs it:
 // entrance → present + bubble (configured texts only) → answer → reaction → exit toward the nearest edge.
 // Every run sends exactly one nudge.respond(runId, outcome) and then nudge.runDone(runId).
 // The window is click-through; pointer moves are forwarded by main and hit-tested here (nudge.setInteractive).
@@ -512,7 +512,7 @@ function buildDevDesk() {
   desk.setAttribute('aria-hidden', 'true');
 
   const title = el('div', 'devdesk-title');
-  title.append(el('i', 'devdesk-dot'), el('i', 'devdesk-dot'), el('i', 'devdesk-dot'), el('span', '', 'scheduler.js — nudgi'));
+  title.append(el('i', 'devdesk-dot'), el('i', 'devdesk-dot'), el('i', 'devdesk-dot'), el('span', '', 'scheduler.js - nudgi'));
 
   const tree = el('div', 'devdesk-tree');
   [['src', 0], ['main', 1], ['main.js', 2], ['scheduler.js', 2, true], ['store.js', 2], ['renderer', 1], ['package.json', 0]]

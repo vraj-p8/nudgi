@@ -1,4 +1,4 @@
-/* Nudgi speech bubble — two looks share one DOM:
+/* Nudgi speech bubble - two looks share one DOM:
    - .nbb-style-comic : floating bold text, warm gradient fill, thick outer outline, white pill buttons.
    - .nbb-style-bubble: classic white speech bubble with a tail and an accent primary button.
    The overlay floats above arbitrary apps, so both looks stay light and high-contrast (no dark mode). */
@@ -461,7 +461,7 @@
 }
 
 /* ---- auto-dismiss countdown ------------------------------------------------------------------ */
-/* A soft tint fills the "later" pill as time runs out — it reads as "I'll pick later for you". */
+/* A soft tint fills the "later" pill as time runs out - it reads as "I'll pick later for you". */
 .nbb-secondary {
   position: relative;
   isolation: isolate;

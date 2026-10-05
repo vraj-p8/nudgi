@@ -112,7 +112,7 @@ function createTray({ assetsDir, getState, actions }) {
   function refresh(state = getState()) {
     if (tray.isDestroyed()) return;
     const st = status(state);
-    tray.setToolTip(`Nudgi — ${st.text.charAt(0).toLowerCase()}${st.text.slice(1)}`.slice(0, 127));
+    tray.setToolTip(`Nudgi - ${st.text.charAt(0).toLowerCase()}${st.text.slice(1)}`.slice(0, 127));
     if (st.paused !== pausedIcon) {
       pausedIcon = st.paused;
       tray.setImage(st.paused ? images.paused : images.normal);

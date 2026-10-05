@@ -1,7 +1,8 @@
 /*
- * Nudgi — 3D avatar ("me3d")
+ * Nudgi - 3D avatars (bundled Kai "nova" and imported "me3d")
  * ================================
- * The user's own Avaturn avatar (shared/avatars/models/me.glb), brought to life with fully procedural motion.
+ * Kai (shared/avatars/models/kai.glb, built by scripts/build-kai.py) and the user's imported Avaturn avatar,
+ * brought to life with fully procedural motion. Per-model height and anchors come from glTF scene extras.
  * Same public API as the 2D engine (see avatar-engine.js §5) so the overlay, fx and dev pages work unchanged:
  *
  *   import { createAvatar3D } from './avatar-3d.js';
@@ -442,7 +443,7 @@ const MIRROR = new Set(['yawOff', 'hipX', 'hipYaw', 'hipRoll', 'spineYaw', 'spin
 
 const POSES = {
   idle: {},
-  // The reel pose: the bottle raised beside the chest, shown proudly; chest up, slight head tilt toward it,
+  // The presenting pose: the bottle raised beside the chest, shown proudly; chest up, slight head tilt toward it,
   // body turned a touch toward the screen centre.
   present: {
     turnC: 1, chestPitch: -5, spinePitch: 0.5, headRoll: 4.5, headPitch: -2.5, neckPitch: -1,
@@ -1042,7 +1043,7 @@ class Avatar3D {
       const base = _v1.set(0, p.water.y0, 0).applyMatrix4(m);
       const top = _v2.set(0, p.water.y1, 0).applyMatrix4(m);
       const fillPt = _v3.copy(base).lerp(top, clamp(L.level, 0, 1));
-      // tilted containers: the liquid runs toward the low end — lower the plane a little with the tilt
+      // tilted containers: the liquid runs toward the low end - lower the plane a little with the tilt
       const axis = _v4.subVectors(top, base).normalize();
       const tilt = Math.acos(clamp(axis.y, -1, 1));
       fillPt.y -= Math.sin(tilt) * 0.012;

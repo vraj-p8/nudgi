@@ -1,7 +1,7 @@
 'use strict';
 
 // Persistent config (userData/config.json): load → sanitize → mutate → debounced atomic write.
-// Everything that enters the config — the file on disk and every IPC payload — passes through the sanitizers
+// Everything that enters the config - the file on disk and every IPC payload - passes through the sanitizers
 // below: unknown keys are dropped, missing keys filled, invalid values replaced, numbers clamped, strings cleaned
 // and truncated. Nothing coming from a renderer is trusted.
 

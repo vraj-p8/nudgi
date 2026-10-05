@@ -89,7 +89,7 @@ export function scheduleText(r) {
   const s = r.schedule;
   const when = s.mode === 'times'
     ? `At ${[...s.times].sort().map(shortHM).join(', ')}`
-    : `Every ${s.every} min · ${shortHM(s.from)}–${shortHM(s.to)}`;
+    : `Every ${s.every} min · ${shortHM(s.from)}-${shortHM(s.to)}`;
   return `${when} · ${daysText(s.days)}`;
 }
 

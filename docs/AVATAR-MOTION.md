@@ -2,13 +2,17 @@
 
 ## Result
 
-Kai (`nova`) is the bundled default. Optional local 3D avatars use `me3d` and the procedural skeletal adapter.
+Kai (`nova`) is the bundled default and renders in 3D from `src/renderer/shared/avatars/models/kai.glb`, built by
+`scripts/build-kai.py` in Blender with the same 52-bone T-pose skeleton as supported imported avatars (`me3d`).
+Both use the procedural skeletal adapter. The model's height and face/chest anchors come from glTF scene extras.
+If WebGL or the model is unavailable, Kai falls back to the SVG rig.
 Desktop sizes are 250 / 360 / 440 px. Personal GLB models are excluded from source control and release packages.
 The adapter was validated with a 52-bone Avaturn rig; see [import requirements](CUSTOM-AVATAR.md).
 
 Kai's distance-driven gait now excludes the screen ground margin from airborne motion, blends leg amplitude
 when starting/stopping, and matches foot velocity through swing transitions. Held props fade at full size.
-Kai is stylized SVG; the optional 3D adapter has articulated knees, wrists and a ballistic umbrella throw.
+The SVG fallback rig has knee and ankle IK (heel strike, toe-off, crouch absorption), wrist follow-through and
+the same ballistic umbrella throw as the 3D adapter.
 
 ## Motion plan and research
 
@@ -76,7 +80,7 @@ Measured frame rate depends on GPU, display scaling and desktop load. The fallba
 cannot run. Imported avatar media packs remain a separate, deferred feature.
 
 
-## Entrance revision — 2026-10-05
+## Entrance revision - 2026-10-05
 
 The descent profile integrates smooth velocity ramps around a steady middle section, with a short final approach.
 It follows the qualitative canopy-supported descent described by [NASA Glenn's flight equations with drag](https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/flight-equations-with-drag/),

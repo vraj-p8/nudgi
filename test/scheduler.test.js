@@ -92,7 +92,7 @@ describe('time helpers', () => {
   });
 });
 
-describe('computeNext — interval mode', () => {
+describe('computeNext - interval mode', () => {
   const water = interval(45, '09:00', '22:00');
 
   it('adds the interval inside the active window', () => {
@@ -167,7 +167,7 @@ describe('computeNext — interval mode', () => {
   });
 });
 
-describe('computeNext — times mode', () => {
+describe('computeNext - times mode', () => {
   it('returns the next listed time strictly after fromMs', () => {
     const r = times(['10:00', '16:00']);
     assert.equal(computeNext(r, MON(9)), MON(10));
@@ -232,7 +232,7 @@ describe('snoozeNext', () => {
 
 // -----------------------------------------------------------------------------------------------------------------
 
-describe('Scheduler — startup restore', () => {
+describe('Scheduler - startup restore', () => {
   it('keeps a persisted next in the future', () => {
     const h = harness([interval(45, '09:00', '22:00')], { runtime: { next: { water: MON(10, 30) } } });
     h.sched.restore();
@@ -284,7 +284,7 @@ describe('Scheduler — startup restore', () => {
   });
 });
 
-describe('Scheduler — firing and blocking', () => {
+describe('Scheduler - firing and blocking', () => {
   let h;
   beforeEach(() => {
     h = harness([interval(45, '09:00', '22:00')], { now: MON(9, 30), runtime: { next: { water: MON(10) } } });
@@ -417,7 +417,7 @@ describe('Scheduler — firing and blocking', () => {
   });
 });
 
-describe('Scheduler — outcomes', () => {
+describe('Scheduler - outcomes', () => {
   let h;
   const today = () => h.config.stats.water[dayKey(h.clock)];
   beforeEach(() => {
@@ -501,7 +501,7 @@ describe('Scheduler — outcomes', () => {
   });
 });
 
-describe('Scheduler — manual runs (summon, tray, demo)', () => {
+describe('Scheduler - manual runs (summon, tray, demo)', () => {
   it('summon picks the reminder with the soonest next run', () => {
     const h = harness(
       [
@@ -558,7 +558,7 @@ describe('Scheduler — manual runs (summon, tray, demo)', () => {
   });
 });
 
-describe('Scheduler — editing, deleting, pausing', () => {
+describe('Scheduler - editing, deleting, pausing', () => {
   let h;
   beforeEach(() => {
     h = harness([interval(45, '09:00', '22:00')], {

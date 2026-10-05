@@ -1,4 +1,4 @@
-/* Nudgi overlay — a full-window, fully transparent stage. Only the bubble's own controls take the pointer;
+/* Nudgi overlay - a full-window, fully transparent stage. Only the bubble's own controls take the pointer;
    the window itself is click-through until the director reports a hit (nudge.setInteractive). */
 html,
 body {

@@ -1,0 +1,47 @@
+name: Bug report
+description: Something in Nudgi does not work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to report this. Please do not include personal avatar files or private data.
+  - type: input
+    id: version
+    attributes:
+      label: Nudgi version
+      description: Shown at the bottom of the settings sidebar.
+      placeholder: "1.2.1"
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: "Windows 11 24H2"
+    validations:
+      required: true
+  - type: dropdown
+    id: buddy
+    attributes:
+      label: Buddy
+      options: [Kai, Imported 3D avatar]
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Settings - Reminders
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots or recordings
+      description: Optional. A short clip helps a lot for animation issues.

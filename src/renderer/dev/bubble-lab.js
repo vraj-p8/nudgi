@@ -329,7 +329,7 @@ const ACTIONS = {
   },
   long: () => {
     $('#greeting').value = 'Good afternoon, Alexandria-Rose! Quick check-in from me 👋';
-    $('#question').value = "It's been a while since your last glass — could you grab some water before the next call?";
+    $('#question').value = "It's been a while since your last glass - could you grab some water before the next call?";
     $('#yesLabel').value = 'Yes, drinking now!';
     $('#laterLabel').value = 'Remind me in a bit';
     return showAll();

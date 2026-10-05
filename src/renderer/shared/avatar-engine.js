@@ -1,5 +1,5 @@
 /*
- * Nudgi — avatar engine
+ * Nudgi - avatar engine
  * ===========================
  * Procedural, spring-driven 2D rig for the desktop buddies. One rAF ticker drives every live avatar; each frame
  * writes at most one `transform` attribute per moving part.
@@ -9,7 +9,7 @@
  *   await av.walkTo(400); await av.pose('present'); await av.play('drink');
  *
  * ---------------------------------------------------------------------------------------------------------------
- * 1. AVATAR DEFINITION CONTRACT  (shared/avatars/<id>.js, default export, plain data — never import the engine)
+ * 1. AVATAR DEFINITION CONTRACT  (shared/avatars/<id>.js, default export, plain data - never import the engine)
  * ---------------------------------------------------------------------------------------------------------------
  *   {
  *     id, name, tagline,
@@ -27,7 +27,7 @@
  *     onExpression?: ({ el, svg, av, state }, name) => void,   // hook after an expression change (e.g. filters)
  *   }
  *
- *   Space: viewBox is always 0 0 200 300, feet on y = 300, centred on x = 100, head top ≈ y 20–30.
+ *   Space: viewBox is always 0 0 200 300, feet on y = 300, centred on x = 100, head top ≈ y 20-30.
  *   "L" = screen-left, "R" = screen-right; the prop is held in the R hand.
  *   Standard skeleton (shared poses + IK assume it): neck (100,152), hips (100,236), shoulders (70,166)/(130,166),
  *   elbows (66,199)/(134,199), hands (64,230)/(136,230), hip joints (88,236)/(112,236).
@@ -36,7 +36,7 @@
  *
  *   Parts: any element with data-part="name" that has a pivot is engine-driven (rot, x, y, sx, sy about its pivot).
  *   Do not put transform attributes on data-part / data-variant / data-slot elements; wrap inner shapes instead.
- *   Required nesting (draw order matters — armL before head, armR after head so a raised prop passes in front):
+ *   Required nesting (draw order matters - armL before head, armR after head so a raised prop passes in front):
  *     body > [tail?] legL legR torso > [torso shapes] armL > forearmL ; head > [hair, ears…] face ; armR > forearmR
  *   face contains data-variant groups "set:value"; the engine shows exactly one value per set (opacity):
  *     eyes:open (holds data-part="pupils") | eyes:happy | eyes:sad | eyes:closed | optional eyes:love, eyes:wink
@@ -52,9 +52,9 @@
  *   Secondary-motion attributes (on any inner element; the engine owns that element's transform):
  *     data-parallax="k"                 shifts x by k * turn (3/4 view illusion: + toward the turn, − away)
  *     data-jiggle="hang|spring|bounce"  + data-pivot="x y" (+ optional data-amount="1")
- *         hang   — pendulum that hangs toward world-down and swings with motion (drawstrings, charms)
- *         spring — upright stalk that lags and wobbles back (cowlick, antenna, ears)
- *         bounce — soft mass that lags vertically (hair volume, cheeks)
+ *         hang   - pendulum that hangs toward world-down and swings with motion (drawstrings, charms)
+ *         spring - upright stalk that lags and wobbles back (cowlick, antenna, ears)
+ *         bounce - soft mass that lags vertically (hair volume, cheeks)
  *
  *   Ids inside svg must be prefixed with the avatar id (`nova-skin`); every instance additionally namespaces
  *   id / url(#…) / href="#…". Themable colours: style="fill: var(--nb-primary)" or
@@ -84,7 +84,7 @@
  *   target = action layer (ctx.to tweens) ?? pose layer (eased blend between poses)  →  damped spring per channel
  *   → + additive layers (breathing, idle sway, gait, airborne dangle, cursor tilt, def.idle)  → 2-bone IK blend
  *   → prop counter-rotation & liquid → jiggles/parallax → face (blink, pupils, talk, variants).
- *   Walk: compass gait — stance foot sweeps linearly under the hip (no foot sliding at any speed), the swing foot
+ *   Walk: compass gait - stance foot sweeps linearly under the hip (no foot sliding at any speed), the swing foot
  *   lifts, the hip bob is exactly L·(1−cos θ); gait phase advances with distance, steps are fitted so the walk ends
  *   with both legs vertical. Hop: crouch → airborne arc (x only moves while airborne) → squash landing.
  *   Clock: every timing honours av.timeScale (0.25 = slow motion, 0 = freeze), including FX animations.
@@ -183,7 +183,7 @@ export const EASE = {
 const easeFn = (e) => (typeof e === 'function' ? e : EASE[e] || EASE.inOut);
 
 // ------------------------------------------------------------------------------------------------- 2D affine math
-// [a, b, c, d, e, f] — x' = a·x + c·y + e, y' = b·x + d·y + f (same as SVG matrix()).
+// [a, b, c, d, e, f] - x' = a·x + c·y + e, y' = b·x + d·y + f (same as SVG matrix()).
 const IDENT = [1, 0, 0, 1, 0, 0];
 function mmul(m, n) {
   return [
@@ -358,7 +358,7 @@ const VARIANT_FALLBACK = {
 // ------------------------------------------------------------------------------------------------- poses
 const POSES = {
   idle: { armL: { rot: 4 }, forearmL: { rot: -7 }, armR: { rot: -4 }, forearmR: { rot: 9 } },
-  // The reel pose: prop held up proudly beside the chest, slight head tilt.
+  // The presenting pose: prop held up proudly beside the chest, slight head tilt.
   present: {
     head: { rot: 4.5 }, torso: { rot: -1.2 }, armL: { rot: 7 }, forearmL: { rot: -12 },
     prop: { tilt: 6 }, view: { turn: 0.1 }, ik: { R: [151, 186] },

@@ -15,5 +15,6 @@ The model is copied into `%APPDATA%\Nudge Buddy\avatars\avatar.glb`; replacing i
 `avatar.glb.previous`. Nudgi never uploads models, reminders or statistics. Creating an avatar on Avaturn is
 an online activity governed by that service's own terms and privacy policy.
 
-Select Kai to return to the bundled character. Rendering failures fall back to Kai.
+Select Kai to return to the bundled 3D character. If a model cannot render, Nudgi falls back to Kai (and to the
+2D Kai when WebGL is unavailable).
 The public repository and app do not contain the author's personal avatar.
