@@ -415,7 +415,9 @@ function createOverlay() {
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
-      backgroundThrottling: false,
+      // Keep background throttling ON. With it off, Chromium never marks the hidden page hidden, so after the first
+      // hide() + showInactive() it leaves its input child window (Chrome_RenderWidgetHostHWND) hidden. Clicks then hit
+      // the non-activatable frame, which swallows the mouse-down, and the bubble's buttons stop working.
       autoplayPolicy: 'no-user-gesture-required',
       spellcheck: false,
       devTools: !app.isPackaged,

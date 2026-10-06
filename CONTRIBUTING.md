@@ -39,6 +39,7 @@ Match the style of the surrounding code and keep comments short and useful.
    .\node_modules\.bin\electron.cmd scripts/verify-desktop.cjs
    .\node_modules\.bin\electron.cmd scripts/verify-kai.cjs      # 2D Kai motion
    .\node_modules\.bin\electron.cmd scripts/verify-avatar.cjs   # 3D motion and props
+   .\node_modules\.bin\electron.cmd scripts/verify-click.cjs    # real mouse input on the bubble (moves your cursor)
    ```
 
 3. Animation or UI changes include a screenshot or short clip in the pull request.

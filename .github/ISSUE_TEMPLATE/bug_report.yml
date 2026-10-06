@@ -10,7 +10,7 @@ body:
     attributes:
       label: Nudgi version
       description: Shown at the bottom of the settings sidebar.
-      placeholder: "1.2.1"
+      placeholder: "1.2.2"
     validations:
       required: true
   - type: input

@@ -40,7 +40,7 @@ app.on('browser-window-created', (_e, win) => win.webContents.on('console-messag
 require('../src/main/main');
 
 const results = [];
-const check = (name, pass, detail = '') => { results.push({ name, pass: !!pass, detail }); console.log(`${pass ? 'PASS' : 'FAIL'} ${name}${detail ? ` Ã¢â‚¬â€ ${detail}` : ''}`); };
+const check = (name, pass, detail = '') => { results.push({ name, pass: !!pass, detail }); console.log(`${pass ? 'PASS' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 const run = (win, code) => win.webContents.executeJavaScript(`(async () => { ${code} })()`);
 const until = async (fn, ms = 20000) => { const end = Date.now() + ms; while (Date.now() < end) { try { if (await fn()) return true; } catch {} await pause(150); } return false; };
@@ -82,10 +82,10 @@ app.whenReady().then(async () => {
       const today = Object.values(st.stats.water || {})[0] || {};
       check('YES counted', today.yes === 1, JSON.stringify(st.stats));
       const next = st.runtime.next.water;
-      check('YES schedules next Ã¢â€°Ë† every (45 min) or next window', next && next - t0 > 40 * 60000, `in ${Math.round((next - t0) / 60000)} min`);
+      check('YES schedules next ≈ every (45 min) or next window', next && next - t0 > 40 * 60000, `in ${Math.round((next - t0) / 60000)} min`);
       check('respond then done, once', events.filter((e) => e.ch === 'respond').length === 1 && events[0].outcome === 'yes', JSON.stringify(events));
 
-      // ---- 2. tray summon Ã¢â€ â€™ LATER Ã¢â€ â€™ streak + snooze
+      // ---- 2. tray summon → LATER → streak + snooze
       check('tray menu built', !!trayMenu && trayMenu.items.some((i) => /Summon/.test(i.label)), trayMenu && trayMenu.items.map((i) => i.label).join(' | '));
       await pause(21000); // main enforces a 20 s gap between real runs
       trayMenu.items.find((i) => /Summon/.test(i.label)).click();
@@ -98,13 +98,13 @@ app.whenReady().then(async () => {
       check('LATER streak = 1', st.runtime.laterStreak.water === 1, JSON.stringify(st.runtime.laterStreak));
       check('LATER snoozes ~15 min', Math.abs(st.runtime.next.water - t1 - 15 * 60000) < 90000, `in ${Math.round((st.runtime.next.water - t1) / 60000)} min`);
 
-      // ---- 3. hotkey summon Ã¢â€ â€™ Ãƒâ€” dismiss
+      // ---- 3. hotkey summon → × dismiss
       check('hotkey registered', !!hotkeyFn);
       await pause(21000);
       if (hotkeyFn) hotkeyFn();
       check('hotkey summon shows buddy', await asking());
       const laterText = await bubbleText();
-      check('streak escalation adds no words', !/Again|Ã°Å¸Â¥Âº/.test(laterText), laterText);
+      check('streak escalation adds no words', !/Again|🥺/.test(laterText), laterText);
       await answer('dismiss');
       await waitDone(3);
       st = await run(settings, 'return await nudge.getState()');

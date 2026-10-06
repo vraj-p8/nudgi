@@ -135,6 +135,7 @@ function prepare(run) {
   sfx.enabled = !!settings.sound;
   sfx.volume = settings.volume ?? 0.6;
   interactive = false; // main resets the window to click-through for every new run
+  pointer.inside = false; // the last run's cursor position is stale: the window was hidden in between
 }
 
 const pan = () => (av ? clamp(((av.x + av.width / 2) / Math.max(1, stage.clientWidth)) * 2 - 1, -1, 1) * 0.6 : 0);
@@ -472,7 +473,10 @@ addEventListener('mousemove', (e) => {
   checkPetting();
 }, { passive: true });
 
-document.documentElement.addEventListener('mouseleave', () => {
+// While the window is click-through, Chromium follows every forwarded move with a mouseleave at that same point, and a
+// real exit fires nothing. Only a leave reported outside the viewport (possible while interactive) is a real exit.
+document.documentElement.addEventListener('mouseleave', (e) => {
+  if (e.clientX >= 0 && e.clientY >= 0 && e.clientX < innerWidth && e.clientY < innerHeight) return;
   pointer.inside = false;
   if (av) av.lookAt(null);
   pet.since = 0;

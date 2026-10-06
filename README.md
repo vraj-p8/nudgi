@@ -70,7 +70,7 @@ The buddy only ever says the text you configure. Everything runs locally on your
 
 ## Install
 
-1. Download **Nudgi Setup 1.2.1.exe** (or the portable EXE) from the
+1. Download **Nudgi Setup 1.2.2.exe** (or the portable EXE) from the
    [latest release](https://github.com/vraj-p8/nudgi/releases/latest).
 2. Run the installer and open **Nudgi** from the Start menu or the desktop shortcut.
 3. Kai introduces himself, then reminds you to drink water every 45 minutes until you change it.
@@ -124,6 +124,7 @@ End-to-end checks run the real app in an isolated profile under `output/`:
 .\node_modules\.bin\electron.cmd scripts/verify-desktop.cjs   # walk / drop / peek entrances and answers
 .\node_modules\.bin\electron.cmd scripts/verify-kai.cjs       # 2D Kai gait, landing and umbrella throw
 .\node_modules\.bin\electron.cmd scripts/verify-avatar.cjs    # 3D motion, props and avatar switching
+.\node_modules\.bin\electron.cmd scripts/verify-click.cjs     # real mouse: hover and click the bubble (moves your cursor)
 ```
 
 Set `NUDGE_TEST_MODEL` to a local GLB to include imported-avatar checks. To rebuild 3D Kai, run

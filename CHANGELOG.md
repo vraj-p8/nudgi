@@ -3,6 +3,19 @@
 All notable changes to Nudgi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.2.2] - 2026-10-06
+
+### Fixed
+- From the second reminder after the app started, clicking YES, Remind me later or × did nothing and the reminder
+  timed out. The overlay disabled Chromium's background throttling, which left its input window hidden after the
+  overlay was shown again, so Windows sent clicks to a window that discarded them.
+- Hovering the bubble could switch the overlay back to click-through for a moment, so a quick click could land on the
+  window underneath. The buddy also no longer loses track of the cursor after every move.
+
+### Added
+- `scripts/verify-click.cjs`, an end-to-end check that hovers and clicks the bubble with real mouse input across
+  consecutive reminders.
+
 ## [1.2.1] - 2026-10-05
 
 ### Changed
@@ -49,6 +62,7 @@ All notable changes to Nudgi are documented here. The format follows
 First public Windows release: editable reminders with schedules, snooze and goals, Kai, local 3D avatar import,
 tray controls, summon hotkey, entrances, sounds and voice.
 
+[1.2.2]: https://github.com/vraj-p8/nudgi/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/vraj-p8/nudgi/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/vraj-p8/nudgi/compare/v1.1.2...v1.2.0
 [1.1.2]: https://github.com/vraj-p8/nudgi/compare/v1.1.1...v1.1.2
